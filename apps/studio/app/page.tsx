@@ -22,6 +22,9 @@ export default async function Page() {
     lastRendered: project.lastRendered,
     lastRenderedLabel: formatLastRendered(project.lastRendered),
     thumbnailUrl: buildThumbnailUrl(project),
+    renderCount: project.renderCount,
+    latestRenderFile: project.latestRenderFile,
+    latestRenderAt: project.latestRenderAt,
   }));
 
   return <DashboardClient initialProjects={initialProjects} />;

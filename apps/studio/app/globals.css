@@ -30,15 +30,16 @@ body {
   margin: 0;
   color: var(--text-primary);
   background:
-    radial-gradient(circle at 14% 18%, rgba(89, 185, 198, 0.2), transparent 42%),
+    radial-gradient(
+      circle at 14% 18%,
+      rgba(89, 185, 198, 0.2),
+      transparent 42%
+    ),
     radial-gradient(circle at 84% 14%, rgba(243, 152, 0, 0.2), transparent 40%),
     linear-gradient(152deg, #f3f3f2 0%, #f9f8f4 42%, #eaf4fc 100%);
   font-family:
-    var(--font-quicksand),
-    "Hiragino Maru Gothic ProN",
-    "Yu Gothic UI",
-    "Meiryo",
-    sans-serif;
+    var(--font-quicksand), "Hiragino Maru Gothic ProN", "Yu Gothic UI",
+    "Meiryo", sans-serif;
 }
 
 body::before {
@@ -47,9 +48,19 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 14% 26%, rgba(255, 255, 255, 0.5) 0 2px, transparent 2px),
-    radial-gradient(circle at 72% 62%, rgba(255, 255, 255, 0.42) 0 2px, transparent 2px);
-  background-size: 36px 36px, 44px 44px;
+    radial-gradient(
+      circle at 14% 26%,
+      rgba(255, 255, 255, 0.5) 0 2px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 72% 62%,
+      rgba(255, 255, 255, 0.42) 0 2px,
+      transparent 2px
+    );
+  background-size:
+    36px 36px,
+    44px 44px;
   opacity: 0.35;
   z-index: -1;
 }

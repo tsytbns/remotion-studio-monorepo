@@ -17,6 +17,9 @@ export type ProjectListItem = {
   thumbnailUrl: string;
   lastRendered: string | null;
   lastRenderedLabel: string;
+  renderCount: number;
+  latestRenderFile: string | null;
+  latestRenderAt: string | null;
 };
 
 type FilterState = {
@@ -55,6 +58,28 @@ type ForgeDevPayload = {
   port?: number;
   startedAt?: string;
   alreadyRunning?: boolean;
+};
+
+type RenderAsset = {
+  relativePath: string;
+  fileName: string;
+  size: number;
+  updatedAt: string;
+  url: string;
+};
+
+type RenderListPayload = {
+  files?: RenderAsset[];
+  message?: string;
+};
+
+type PreviewState = {
+  appId: string;
+  title: string;
+  relativePath: string;
+  url: string;
+  updatedAt: string | null;
+  size: number | null;
 };
 
 const useStudioFilterStore = create<FilterState>((set) => ({
@@ -124,6 +149,37 @@ function buildThumbnailUrl(project: {
   return `/api/thumbnail?app=${encodeURIComponent(project.appId)}&file=${encodeURIComponent(project.thumbnail)}`;
 }
 
+function buildRenderUrl(appId: string, file: string): string {
+  return `/api/renders?app=${encodeURIComponent(appId)}&file=${encodeURIComponent(file)}`;
+}
+
+function extractFileName(relativePath: string): string {
+  const tokens = relativePath.split("/");
+  return tokens[tokens.length - 1] ?? relativePath;
+}
+
+function openUrlWithFallback(url: string): boolean {
+  const popup = window.open(url, "_blank", "noopener,noreferrer");
+  if (popup) {
+    return true;
+  }
+  window.location.assign(url);
+  return false;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes <= 0) {
+    return "0 B";
+  }
+  const units = ["B", "KB", "MB", "GB"];
+  const power = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
+  );
+  const value = bytes / 1024 ** power;
+  return `${value.toFixed(power === 0 ? 0 : 1)} ${units[power]}`;
+}
+
 function toDevServerState(
   appId: string,
   input: Partial<DevServerState>,
@@ -177,6 +233,16 @@ export function DashboardClient({
   const [devServers, setDevServers] = useState<Record<string, DevServerState>>(
     {},
   );
+  const [renderAssetsByApp, setRenderAssetsByApp] = useState<
+    Record<string, RenderAsset[]>
+  >({});
+  const [openRenderPanels, setOpenRenderPanels] = useState<
+    Record<string, boolean>
+  >({});
+  const [renderLoadingByApp, setRenderLoadingByApp] = useState<
+    Record<string, boolean>
+  >({});
+  const [preview, setPreview] = useState<PreviewState | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
   const query = useStudioFilterStore((state) => state.query);
@@ -261,7 +327,7 @@ export function DashboardClient({
 
   const activeDevCount = Object.keys(devServers).length;
   const renderedCount = projects.filter(
-    (project) => project.lastRendered,
+    (project) => project.renderCount > 0,
   ).length;
   const forgeScore = Math.min(
     100,
@@ -297,44 +363,49 @@ export function DashboardClient({
     setMessage(null);
 
     const popup = window.open("", "_blank");
-    const response = await fetch("/api/forge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ appId: project.appId, action: "dev" }),
-    });
-    const payload = (await response
-      .json()
-      .catch(() => ({}))) as ForgeDevPayload;
+    try {
+      const response = await fetch("/api/forge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appId: project.appId, action: "dev" }),
+      });
+      const payload = (await response
+        .json()
+        .catch(() => ({}))) as ForgeDevPayload;
 
-    if (!response.ok) {
+      if (!response.ok) {
+        popup?.close();
+        setMessage(payload.message ?? "Dev起動に失敗しました。");
+        return;
+      }
+
+      if (payload.url && popup) {
+        popup.location.href = payload.url;
+      } else if (payload.url) {
+        window.location.assign(payload.url);
+      }
+
+      const nextDevServer = toDevServerState(project.appId, {
+        appId: project.appId,
+        pid: payload.pid,
+        port: payload.port,
+        url: payload.url,
+        logPath: payload.logPath,
+        startedAt: payload.startedAt,
+      });
+      if (nextDevServer) {
+        setDevServers((prev) => ({ ...prev, [project.appId]: nextDevServer }));
+      }
+
+      setMessage(
+        `${payload.alreadyRunning ? "Dev接続" : "Dev起動"}: ${project.appId}${payload.url ? ` (${payload.url})` : ""}${payload.logPath ? ` / log: ${payload.logPath}` : ""}`,
+      );
+    } catch {
       popup?.close();
-      setMessage(payload.message ?? "Dev起動に失敗しました。");
+      setMessage(`Dev起動リクエストに失敗しました: ${project.appId}`);
+    } finally {
       setBusyKey(null);
-      return;
     }
-
-    if (payload.url && popup) {
-      popup.location.href = payload.url;
-    } else if (payload.url) {
-      window.open(payload.url, "_blank");
-    }
-
-    const nextDevServer = toDevServerState(project.appId, {
-      appId: project.appId,
-      pid: payload.pid,
-      port: payload.port,
-      url: payload.url,
-      logPath: payload.logPath,
-      startedAt: payload.startedAt,
-    });
-    if (nextDevServer) {
-      setDevServers((prev) => ({ ...prev, [project.appId]: nextDevServer }));
-    }
-
-    setMessage(
-      `${payload.alreadyRunning ? "Dev接続" : "Dev起動"}: ${project.appId}${payload.url ? ` (${payload.url})` : ""}${payload.logPath ? ` / log: ${payload.logPath}` : ""}`,
-    );
-    setBusyKey(null);
   };
 
   const stopDev = async (project: ProjectListItem) => {
@@ -342,35 +413,42 @@ export function DashboardClient({
     setBusyKey(key);
     setMessage(null);
 
-    const response = await fetch("/api/forge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ appId: project.appId, action: "stop-dev" }),
-    });
-    const payload = (await response.json().catch(() => ({}))) as {
-      message?: string;
-    };
+    try {
+      const response = await fetch("/api/forge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appId: project.appId, action: "stop-dev" }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
 
-    setDevServers((prev) => {
-      const next = { ...prev };
-      delete next[project.appId];
-      return next;
-    });
+      if (response.status === 404) {
+        setDevServers((prev) => {
+          const next = { ...prev };
+          delete next[project.appId];
+          return next;
+        });
+        setMessage(`既に停止中: ${project.appId}`);
+        return;
+      }
 
-    if (response.status === 404) {
-      setMessage(`既に停止中: ${project.appId}`);
+      if (!response.ok) {
+        setMessage(payload.message ?? "Dev停止に失敗しました。");
+        return;
+      }
+
+      setDevServers((prev) => {
+        const next = { ...prev };
+        delete next[project.appId];
+        return next;
+      });
+      setMessage(payload.message ?? `Dev停止: ${project.appId}`);
+    } catch {
+      setMessage(`Dev停止リクエストに失敗しました: ${project.appId}`);
+    } finally {
       setBusyKey(null);
-      return;
     }
-
-    if (!response.ok) {
-      setMessage(payload.message ?? "Dev停止に失敗しました。");
-      setBusyKey(null);
-      return;
-    }
-
-    setMessage(payload.message ?? `Dev停止: ${project.appId}`);
-    setBusyKey(null);
   };
 
   const openDev = (project: ProjectListItem) => {
@@ -379,7 +457,119 @@ export function DashboardClient({
       setMessage(`Devサーバーが見つかりません: ${project.appId}`);
       return;
     }
-    window.open(devServer.url, "_blank");
+    openUrlWithFallback(devServer.url);
+  };
+
+  const syncRenderAssets = async (
+    appId: string,
+    options?: { silent?: boolean },
+  ): Promise<RenderAsset[] | null> => {
+    setRenderLoadingByApp((prev) => ({ ...prev, [appId]: true }));
+
+    const response = await fetch(
+      `/api/renders?app=${encodeURIComponent(appId)}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      },
+    ).catch(() => null);
+
+    if (!response) {
+      setRenderLoadingByApp((prev) => ({ ...prev, [appId]: false }));
+      if (!options?.silent) {
+        setMessage(`Render一覧の取得に失敗: ${appId}`);
+      }
+      return null;
+    }
+
+    const payload = (await response
+      .json()
+      .catch(() => ({}))) as RenderListPayload;
+    if (!response.ok || !Array.isArray(payload.files)) {
+      setRenderLoadingByApp((prev) => ({ ...prev, [appId]: false }));
+      if (!options?.silent) {
+        setMessage(payload.message ?? `Render一覧の取得に失敗: ${appId}`);
+      }
+      return null;
+    }
+
+    const files = payload.files ?? [];
+    setRenderAssetsByApp((prev) => ({ ...prev, [appId]: files }));
+    setProjects((prev) =>
+      prev.map((item) => {
+        if (item.appId !== appId) {
+          return item;
+        }
+        const latest = files[0];
+        return {
+          ...item,
+          renderCount: files.length,
+          latestRenderFile: latest?.relativePath ?? null,
+          latestRenderAt: latest?.updatedAt ?? null,
+        };
+      }),
+    );
+    setRenderLoadingByApp((prev) => ({ ...prev, [appId]: false }));
+
+    if (!options?.silent) {
+      setMessage(`Render一覧更新: ${appId} (${files.length}件)`);
+    }
+
+    return files;
+  };
+
+  const toggleRenderPanel = (project: ProjectListItem) => {
+    const nextOpen = !openRenderPanels[project.appId];
+    setOpenRenderPanels((prev) => ({ ...prev, [project.appId]: nextOpen }));
+    if (nextOpen && !renderAssetsByApp[project.appId]) {
+      void syncRenderAssets(project.appId, { silent: true });
+    }
+  };
+
+  const openLatestRender = async (project: ProjectListItem) => {
+    const cached = renderAssetsByApp[project.appId] ?? [];
+    const firstCached = cached[0];
+    if (firstCached) {
+      setPreview({
+        appId: project.appId,
+        title: project.title,
+        relativePath: firstCached.relativePath,
+        url: firstCached.url,
+        updatedAt: firstCached.updatedAt,
+        size: firstCached.size,
+      });
+      return;
+    }
+
+    if (project.latestRenderFile) {
+      setPreview({
+        appId: project.appId,
+        title: project.title,
+        relativePath: project.latestRenderFile,
+        url: buildRenderUrl(project.appId, project.latestRenderFile),
+        updatedAt: project.latestRenderAt,
+        size: null,
+      });
+      return;
+    }
+
+    const synced = await syncRenderAssets(project.appId, { silent: true });
+    const firstSynced = synced?.[0];
+    if (firstSynced) {
+      setPreview({
+        appId: project.appId,
+        title: project.title,
+        relativePath: firstSynced.relativePath,
+        url: firstSynced.url,
+        updatedAt: firstSynced.updatedAt,
+        size: firstSynced.size,
+      });
+      return;
+    }
+
+    setMessage(
+      `まだ視聴できる動画がありません: ${project.appId}（Renderを作成してください）`,
+    );
   };
 
   const runRender = async (project: ProjectListItem) => {
@@ -387,27 +577,34 @@ export function DashboardClient({
     setBusyKey(key);
     setMessage(null);
 
-    const response = await fetch("/api/forge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ appId: project.appId, action: "render" }),
-    });
-    const payload = (await response.json().catch(() => ({}))) as {
-      message?: string;
-      composition?: string;
-      logPath?: string;
-    };
+    try {
+      const response = await fetch("/api/forge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appId: project.appId, action: "render" }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        composition?: string;
+        logPath?: string;
+      };
 
-    if (!response.ok) {
-      setMessage(payload.message ?? "Render開始に失敗しました。");
+      if (!response.ok) {
+        setMessage(payload.message ?? "Render開始に失敗しました。");
+        return;
+      }
+
+      setMessage(
+        `Render開始: ${project.appId}${payload.composition ? ` (${payload.composition})` : ""}${payload.logPath ? ` / log: ${payload.logPath}` : ""}`,
+      );
+      window.setTimeout(() => {
+        void syncRenderAssets(project.appId, { silent: true });
+      }, 4000);
+    } catch {
+      setMessage(`Render開始リクエストに失敗しました: ${project.appId}`);
+    } finally {
       setBusyKey(null);
-      return;
     }
-
-    setMessage(
-      `Render開始: ${project.appId}${payload.composition ? ` (${payload.composition})` : ""}${payload.logPath ? ` / log: ${payload.logPath}` : ""}`,
-    );
-    setBusyKey(null);
   };
 
   const saveMeta = async (project: ProjectListItem) => {
@@ -420,65 +617,69 @@ export function DashboardClient({
     setBusyKey(key);
     setMessage(null);
 
-    const response = await fetch("/api/project-meta", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        appId: project.appId,
-        meta: {
-          title: draft.title,
-          description: draft.description,
-          tags: draft.tags,
-          category: draft.category,
-          thumbnail: draft.thumbnail,
-        },
-      }),
-    });
+    try {
+      const response = await fetch("/api/project-meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appId: project.appId,
+          meta: {
+            title: draft.title,
+            description: draft.description,
+            tags: draft.tags,
+            category: draft.category,
+            thumbnail: draft.thumbnail,
+          },
+        }),
+      });
 
-    const payload = (await response.json().catch(() => ({}))) as {
-      message?: string;
-      meta?: {
-        title: string;
-        description: string;
-        tags: string[];
-        thumbnail: string;
-        category: string;
-        lastRendered: string | null;
-      };
-    };
-
-    if (!response.ok || !payload.meta) {
-      setMessage(payload.message ?? "メタ保存に失敗しました。");
-      setBusyKey(null);
-      return;
-    }
-
-    setProjects((prev) =>
-      prev.map((item) => {
-        if (item.appId !== project.appId) {
-          return item;
-        }
-        return {
-          ...item,
-          title: payload.meta?.title ?? item.title,
-          description: payload.meta?.description ?? item.description,
-          tags: payload.meta?.tags ?? item.tags,
-          category: payload.meta?.category ?? item.category,
-          thumbnail: payload.meta?.thumbnail ?? item.thumbnail,
-          thumbnailUrl: buildThumbnailUrl({
-            appId: item.appId,
-            thumbnail: payload.meta?.thumbnail ?? item.thumbnail,
-          }),
-          lastRendered: payload.meta?.lastRendered ?? item.lastRendered,
-          lastRenderedLabel: formatLastRendered(
-            payload.meta?.lastRendered ?? item.lastRendered,
-          ),
+      const payload = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        meta?: {
+          title: string;
+          description: string;
+          tags: string[];
+          thumbnail: string;
+          category: string;
+          lastRendered: string | null;
         };
-      }),
-    );
-    setOpenEditors((prev) => ({ ...prev, [project.appId]: false }));
-    setMessage(`メタ保存: ${project.appId}`);
-    setBusyKey(null);
+      };
+
+      if (!response.ok || !payload.meta) {
+        setMessage(payload.message ?? "メタ保存に失敗しました。");
+        return;
+      }
+
+      setProjects((prev) =>
+        prev.map((item) => {
+          if (item.appId !== project.appId) {
+            return item;
+          }
+          return {
+            ...item,
+            title: payload.meta?.title ?? item.title,
+            description: payload.meta?.description ?? item.description,
+            tags: payload.meta?.tags ?? item.tags,
+            category: payload.meta?.category ?? item.category,
+            thumbnail: payload.meta?.thumbnail ?? item.thumbnail,
+            thumbnailUrl: buildThumbnailUrl({
+              appId: item.appId,
+              thumbnail: payload.meta?.thumbnail ?? item.thumbnail,
+            }),
+            lastRendered: payload.meta?.lastRendered ?? item.lastRendered,
+            lastRenderedLabel: formatLastRendered(
+              payload.meta?.lastRendered ?? item.lastRendered,
+            ),
+          };
+        }),
+      );
+      setOpenEditors((prev) => ({ ...prev, [project.appId]: false }));
+      setMessage(`メタ保存: ${project.appId}`);
+    } catch {
+      setMessage(`メタ保存リクエストに失敗しました: ${project.appId}`);
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   return (
@@ -494,11 +695,12 @@ export function DashboardClient({
               Remotion Forge Playground
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-strong)] sm:text-4xl">
-              作るほど楽しい、作品の鍛冶場
+              作品をすぐ見れる、やさしい管理画面
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
-              作品管理はここで完結。`Dev起動 / 停止`、`Render`、`Meta編集`
-              をカードから一気に回せます。
+              まずは `作品を見る`
+              を押すだけ。Dev操作は上級者メニューにまとめたので、
+              初心者でも迷わず運用できます。
             </p>
 
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -592,6 +794,17 @@ export function DashboardClient({
               const devButtonKey = isDevRunning
                 ? `${project.appId}:stop-dev`
                 : `${project.appId}:dev`;
+              const renderAssets = renderAssetsByApp[project.appId] ?? [];
+              const renderPanelOpen = Boolean(openRenderPanels[project.appId]);
+              const renderLoading = Boolean(renderLoadingByApp[project.appId]);
+              const latestRenderPath =
+                project.latestRenderFile ??
+                renderAssets[0]?.relativePath ??
+                null;
+              const canPreview =
+                Boolean(latestRenderPath) ||
+                renderAssets.length > 0 ||
+                project.renderCount > 0;
 
               return (
                 <Card
@@ -605,6 +818,15 @@ export function DashboardClient({
                       alt={`${project.title} thumbnail`}
                       className="h-full w-full object-cover"
                       loading="lazy"
+                      onError={(event) => {
+                        const fallback = `/api/thumbnail?app=${encodeURIComponent(project.appId)}&file=${encodeURIComponent("public/thumbnail.svg")}`;
+                        const image = event.currentTarget;
+                        if (
+                          !image.src.includes("file=public%2Fthumbnail.svg")
+                        ) {
+                          image.src = fallback;
+                        }
+                      }}
                     />
                     <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" />
                     <p className="absolute left-3 top-3 rounded-full border border-white/60 bg-white/72 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#595857]">
@@ -647,69 +869,174 @@ export function DashboardClient({
                         {project.lastRenderedLabel}
                       </p>
                       <p className="mt-2 text-[11px] text-[var(--text-secondary)]">
+                        Render Files: {project.renderCount}
+                      </p>
+                      <p className="mt-1 line-clamp-1 text-[11px] text-[var(--text-secondary)]">
+                        Latest: {latestRenderPath ?? "未検出 / none"}
+                      </p>
+                      <p className="mt-1 text-[11px] text-[var(--text-secondary)]">
                         App Path: {project.appId}
                       </p>
                     </div>
-                    <div className="mt-3 rounded-xl border border-[color:var(--line-soft)] bg-[color:var(--bg-surface)] p-3 text-xs text-[var(--text-secondary)]">
-                      <p className="uppercase tracking-[0.18em] text-[10px] text-[var(--accent-strong)]">
-                        Dev Server
+                    <div className="mt-4 rounded-xl border border-[#0ea5a5]/35 bg-[#f3fbfb] p-3">
+                      <p className="text-[11px] font-semibold text-[#0f5f5f]">
+                        まずはここから: 作品を見る
                       </p>
-                      {isDevRunning ? (
-                        <>
-                          <p className="mt-1 text-sm font-semibold text-[#286f79]">
-                            Running on :{devServer?.port}
-                          </p>
-                          <p className="mt-1 break-all text-[11px]">
-                            PID: {devServer?.pid} / Log:{" "}
-                            {devServer?.logPath || "(none)"}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                          停止中 / Stopped
-                        </p>
-                      )}
+                      <p className="mt-1 text-[11px] text-[#0f5f5f]/80">
+                        Dev起動なしで、レンダリング済み動画をそのまま再生できます。
+                      </p>
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
                       <button
                         type="button"
-                        onClick={() =>
-                          isDevRunning ? stopDev(project) : runDev(project)
-                        }
-                        disabled={busyKey === devButtonKey}
-                        className={cn(
-                          "rounded-lg px-2 py-2 text-xs font-semibold transition hover:-translate-y-0.5 disabled:opacity-50",
-                          isDevRunning
-                            ? "border border-[#f39800] bg-[#fff1e1] text-[#8b5600]"
-                            : "border border-[#59b9c6] bg-[#e8f7f9] text-[#286f79]",
-                        )}
+                        onClick={() => void openLatestRender(project)}
+                        disabled={!canPreview}
+                        className="rounded-lg border border-[#0ea5a5] bg-[#e6fbfb] px-3 py-2 text-sm font-semibold text-[#0f5f5f] transition hover:-translate-y-0.5 disabled:opacity-50"
                       >
-                        {isDevRunning ? "Dev停止" : "Dev起動"}
+                        作品を見る
                       </button>
                       <button
                         type="button"
-                        onClick={() => openDev(project)}
-                        disabled={!isDevRunning}
-                        className="rounded-lg border border-[#59b9c6] bg-[#eaf4fc] px-2 py-2 text-xs font-semibold text-[#2f6270] transition hover:-translate-y-0.5 disabled:opacity-50"
+                        onClick={() => toggleRenderPanel(project)}
+                        className="rounded-lg border border-[#2563eb] bg-[#eaf2ff] px-3 py-2 text-sm font-semibold text-[#1f4c9a] transition hover:-translate-y-0.5"
                       >
-                        Devを開く
+                        {renderPanelOpen
+                          ? "動画一覧を閉じる"
+                          : "動画一覧を開く"}
                       </button>
                       <button
                         type="button"
                         onClick={() => runRender(project)}
                         disabled={busyKey === `${project.appId}:render`}
-                        className="rounded-lg border border-[#b9d08b] bg-[#f2f8e8] px-2 py-2 text-xs font-semibold text-[#536f2a] transition hover:-translate-y-0.5 disabled:opacity-50"
+                        className="rounded-lg border border-[#b9d08b] bg-[#f2f8e8] px-3 py-2 text-sm font-semibold text-[#536f2a] transition hover:-translate-y-0.5 disabled:opacity-50"
                       >
-                        Render
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleEditor(project)}
-                        className="rounded-lg border border-[#7058a3] bg-[#efe9f8] px-2 py-2 text-xs font-semibold text-[#4e327f] transition hover:-translate-y-0.5"
-                      >
-                        {editorOpen ? "閉じる" : "Meta編集"}
+                        Renderを作成
                       </button>
                     </div>
+                    {renderPanelOpen ? (
+                      <div className="mt-3 rounded-xl border border-[color:var(--line-soft)] bg-[color:var(--bg-surface)] p-3 text-xs text-[var(--text-secondary)]">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="uppercase tracking-[0.18em] text-[10px] text-[var(--accent-strong)]">
+                            Render Assets
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void syncRenderAssets(project.appId)}
+                            disabled={renderLoading}
+                            className="rounded-md border border-[#2563eb] bg-white px-2 py-1 text-[10px] font-semibold text-[#1f4c9a] disabled:opacity-50"
+                          >
+                            一覧更新
+                          </button>
+                        </div>
+                        {renderLoading ? (
+                          <p className="mt-2 text-[11px]">読み込み中...</p>
+                        ) : renderAssets.length === 0 ? (
+                          <p className="mt-2 text-[11px]">
+                            レンダリング動画はまだありません。
+                          </p>
+                        ) : (
+                          <div className="mt-2 space-y-2">
+                            {renderAssets.slice(0, 6).map((asset) => (
+                              <div
+                                key={`${project.appId}:${asset.relativePath}`}
+                                className="rounded-lg border border-[color:var(--line-soft)] bg-white px-2 py-2"
+                              >
+                                <p className="line-clamp-1 font-semibold text-[var(--text-primary)]">
+                                  {asset.fileName}
+                                </p>
+                                <p className="mt-1 line-clamp-1 text-[10px]">
+                                  {asset.relativePath}
+                                </p>
+                                <div className="mt-1 flex items-center justify-between gap-2 text-[10px]">
+                                  <span>
+                                    {formatFileSize(asset.size)} /{" "}
+                                    {formatLastRendered(asset.updatedAt)}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPreview({
+                                        appId: project.appId,
+                                        title: project.title,
+                                        relativePath: asset.relativePath,
+                                        url: asset.url,
+                                        updatedAt: asset.updatedAt,
+                                        size: asset.size,
+                                      })
+                                    }
+                                    className="rounded-md border border-[#0ea5a5] bg-[#e6fbfb] px-2 py-1 font-semibold text-[#0f5f5f]"
+                                  >
+                                    再生
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                            {renderAssets.length > 6 ? (
+                              <p className="text-[10px] text-[var(--text-secondary)]">
+                                他 {renderAssets.length - 6} 件
+                              </p>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                    <details className="mt-3 rounded-xl border border-[color:var(--line-soft)] bg-[color:var(--bg-surface)] p-3">
+                      <summary className="cursor-pointer text-xs font-semibold text-[var(--text-secondary)]">
+                        上級者メニュー（Dev / Meta）
+                      </summary>
+                      <div className="mt-3 rounded-xl border border-[color:var(--line-soft)] bg-white p-3 text-xs text-[var(--text-secondary)]">
+                        <p className="uppercase tracking-[0.18em] text-[10px] text-[var(--accent-strong)]">
+                          Dev Server
+                        </p>
+                        {isDevRunning ? (
+                          <>
+                            <p className="mt-1 text-sm font-semibold text-[#286f79]">
+                              Running on :{devServer?.port}
+                            </p>
+                            <p className="mt-1 break-all text-[11px]">
+                              PID: {devServer?.pid} / Log:{" "}
+                              {devServer?.logPath || "(none)"}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                            停止中 / Stopped
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            isDevRunning ? stopDev(project) : runDev(project)
+                          }
+                          disabled={busyKey === devButtonKey}
+                          className={cn(
+                            "rounded-lg px-2 py-2 text-xs font-semibold transition hover:-translate-y-0.5 disabled:opacity-50",
+                            isDevRunning
+                              ? "border border-[#f39800] bg-[#fff1e1] text-[#8b5600]"
+                              : "border border-[#59b9c6] bg-[#e8f7f9] text-[#286f79]",
+                          )}
+                        >
+                          {isDevRunning ? "Dev停止" : "Dev起動"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openDev(project)}
+                          disabled={!isDevRunning}
+                          className="rounded-lg border border-[#59b9c6] bg-[#eaf4fc] px-2 py-2 text-xs font-semibold text-[#2f6270] transition hover:-translate-y-0.5 disabled:opacity-50"
+                        >
+                          Devを開く
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleEditor(project)}
+                          className="rounded-lg border border-[#7058a3] bg-[#efe9f8] px-2 py-2 text-xs font-semibold text-[#4e327f] transition hover:-translate-y-0.5"
+                        >
+                          {editorOpen ? "Meta編集を閉じる" : "Meta編集"}
+                        </button>
+                      </div>
+                    </details>
                     {editorOpen && draft ? (
                       <div className="mt-4 space-y-2 rounded-xl border border-[color:var(--line-soft)] bg-[#faf9f6] p-3">
                         <input
@@ -798,6 +1125,74 @@ export function DashboardClient({
             })}
           </section>
         )}
+        {preview ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            onClick={() => setPreview(null)}
+          >
+            <div
+              className="w-full max-w-5xl rounded-2xl border border-white/20 bg-[#0f172a] p-4 text-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-cyan-200">
+                    Quick Preview
+                  </p>
+                  <p className="mt-1 text-lg font-semibold">{preview.title}</p>
+                  <p className="text-xs text-cyan-100">
+                    {extractFileName(preview.relativePath)}
+                  </p>
+                  <p className="text-xs text-slate-300">
+                    {preview.relativePath}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openUrlWithFallback(preview.url)}
+                    className="rounded-lg border border-cyan-300/60 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100"
+                  >
+                    新しいタブで開く
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreview(null)}
+                    className="rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    閉じる
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-white/10 bg-black">
+                <video
+                  key={preview.url}
+                  controls
+                  autoPlay
+                  playsInline
+                  preload="metadata"
+                  className="aspect-video w-full"
+                  src={preview.url}
+                />
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">
+                <span>App: {preview.appId}</span>
+                <span>
+                  Updated:{" "}
+                  {preview.updatedAt
+                    ? formatLastRendered(preview.updatedAt)
+                    : "unknown"}
+                </span>
+                <span>
+                  Size:{" "}
+                  {preview.size !== null
+                    ? formatFileSize(preview.size)
+                    : "unknown"}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </main>
   );
