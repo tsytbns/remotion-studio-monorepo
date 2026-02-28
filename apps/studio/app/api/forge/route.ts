@@ -17,12 +17,13 @@ import {
   removeDevServer,
   upsertDevServer,
 } from "@/lib/forge-runtime";
+import { moveProjectToTrash } from "@/lib/forge-trash";
 import { resolveAppsRoot } from "@/lib/project-meta";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type ForgeAction = "dev" | "stop-dev" | "render";
+type ForgeAction = "dev" | "stop-dev" | "render" | "delete-project";
 
 function hasTraversalPattern(value: string): boolean {
   return /(^|[\\/])\.\.([\\/]|$)/.test(value);
@@ -234,7 +235,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (action !== "dev" && action !== "stop-dev" && action !== "render") {
+  if (
+    action !== "dev" &&
+    action !== "stop-dev" &&
+    action !== "render" &&
+    action !== "delete-project"
+  ) {
     return NextResponse.json({ message: "Invalid action." }, { status: 400 });
   }
 
@@ -273,12 +279,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid app path." }, { status: 400 });
   }
 
-  if (
-    !existsSync(appDir) ||
-    !statSync(appDir).isDirectory() ||
-    !existsSync(path.join(appDir, "package.json"))
-  ) {
+  if (!existsSync(appDir) || !statSync(appDir).isDirectory()) {
     return NextResponse.json({ message: "App not found." }, { status: 404 });
+  }
+
+  if (action === "delete-project") {
+    if (appId === "studio") {
+      return NextResponse.json(
+        { message: "The studio app cannot be deleted from the dashboard." },
+        { status: 400 },
+      );
+    }
+
+    const server = await getActiveDevServer(appId);
+    let stoppedDev = false;
+    if (server) {
+      stoppedDev = terminateProcessTree(server.pid);
+      await removeDevServer(appId);
+    }
+
+    await moveProjectToTrash({
+      appsRoot,
+      appId,
+      appDir,
+    });
+    return NextResponse.json({
+      ok: true,
+      message: `Project moved to trash: ${appId}`,
+      appId,
+      stoppedDev,
+    });
+  }
+
+  if (!existsSync(path.join(appDir, "package.json"))) {
+    return NextResponse.json(
+      { message: "App package.json not found." },
+      { status: 404 },
+    );
   }
 
   const command = getPnpmCommand();
