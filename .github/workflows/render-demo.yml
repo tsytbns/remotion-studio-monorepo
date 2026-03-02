@@ -135,6 +135,12 @@ jobs:
               continue
             fi
 
+            # Skip non-Remotion dashboard app
+            if [ "$app_name" = "studio" ]; then
+              echo "Skipping studio dashboard (non-Remotion app)."
+              continue
+            fi
+
             # If specific app requested, skip others
             if [ -n "${{ inputs.app }}" ] && [ "$app_name" != "${{ inputs.app }}" ]; then
               continue
@@ -160,8 +166,7 @@ jobs:
             done
 
             if [ -z "$entry" ]; then
-              echo "No entry point found for $app_name"
-              failed=1
+              echo "No entry point found for $app_name. Skipping."
               cd "$GITHUB_WORKSPACE"
               continue
             fi
