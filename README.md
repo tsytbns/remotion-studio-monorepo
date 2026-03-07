@@ -180,6 +180,20 @@ remotion-studio-monorepo/
 | [Troubleshooting](./docs/troubleshooting.md)              | Common issues & solutions      |
 
 > AI-assisted changes should follow the **Skill-first** workflow. Use MCP only when explicitly needed (`docs/mcp-setup.md`).
+>
+> Recommended: Install the `remotion-best-practices` skill in your Codex/agents environment for Remotion-specific guidance. It lives outside this repository, so cloning this repo alone does not install it.
+>
+> Suggested setup:
+>
+> ```bash
+> # Install skills from remotion-dev/skills
+> npx skills install remotion-dev/skills
+>
+> # Then use: remotion-best-practices
+>
+> # Update installed Remotion skills later
+> pnpm skills:remotion:update
+> ```
 
 ## Troubleshooting
 

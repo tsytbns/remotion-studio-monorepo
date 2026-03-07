@@ -180,6 +180,20 @@ remotion-studio-monorepo/
 | [Troubleshooting](./docs/troubleshooting.ja.md)              | よくある問題と解決方法      |
 
 > AI作業は **Skill-First** を標準とします。MCPは必要時のみ任意で利用してください（`docs/mcp-setup.ja.md`）。
+>
+> 推奨: Remotion 固有のガイダンスを得るために、Codex/agents 環境へ `remotion-best-practices` スキルを別途インストールしてください。このスキルはリポジトリ外にあるため、この repo を clone しただけでは導入されません。
+>
+> 推奨セットアップ:
+>
+> ```bash
+> # remotion-dev/skills からスキルを導入
+> npx skills install remotion-dev/skills
+>
+> # その後に利用: remotion-best-practices
+>
+> # 導入済み Remotion スキルの更新
+> pnpm skills:remotion:update
+> ```
 
 ## トラブルシューティング
 
