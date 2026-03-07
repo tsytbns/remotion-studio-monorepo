@@ -19,9 +19,6 @@ pnpm create:project
 # Open Forge Studio dashboard (Web)
 pnpm forge studio
 
-# CLI fallback launcher (dev/render)
-pnpm forge launch
-
 # Start development
 cd apps/<name> && pnpm dev
 ```
@@ -41,11 +38,13 @@ pnpm forge studio
 # 2) Create a new project
 pnpm create:project
 
-# 3) Launch from terminal with number selection
-pnpm forge launch
+# 3) Start development
+cd apps/<name> && pnpm dev
+
+# 4) Render when ready
+pnpm forge render --app <name> --composition <id>
 ```
 
-Inside `pnpm forge launch`, pick an app and run `dev` or `render`.  
 On successful `render`, a celebration page opens in your browser (Confetti + fireworks + achievement).
 
 ## Forge Command Cheat Sheet
@@ -53,7 +52,6 @@ On successful `render`, a celebration page opens in your browser (Confetti + fir
 | Command                                             | What it does                                                       |
 | --------------------------------------------------- | ------------------------------------------------------------------ |
 | `pnpm forge studio`                                 | Starts Next.js Studio dashboard (project cards)                    |
-| `pnpm forge launch`                                 | Starts CLI launcher (`dev/render` via number selection)            |
 | `pnpm forge render --app <name> --composition <id>` | Renders a specific app directly                                    |
 | `pnpm create:project`                               | Creates a new project (auto-generates `app.meta.json` + thumbnail) |
 | `pnpm create:project -- -t 3d`                      | Creates a new project from 3D template                             |
@@ -72,8 +70,8 @@ The goal is simple: keep most daily project management inside the dashboard befo
 
 1. Open `pnpm forge studio` and choose what to build.
 2. Run `pnpm create:project` to add a new work.
-3. Use `pnpm forge launch` with `dev` to iterate.
-4. Use `pnpm forge launch` with `render` to finish.
+3. Use `cd apps/<name> && pnpm dev` to iterate.
+4. Use `pnpm forge render --app <name> --composition <id>` to finish.
 5. Enjoy the celebration screen, then forge the next one.
 
 ## Prerequisites
@@ -102,7 +100,7 @@ node -v && pnpm -v && ffmpeg -version
 - **Monorepo** powered by pnpm workspaces
 - **Centralized dependency management** via **pnpm Catalog**
 - **Templates** for 2D & 3D projects (`apps/_template`, `apps/3D-template`)
-- **Forge Studio dashboard** (`pnpm forge studio`) + CLI launcher fallback (`pnpm forge launch`)
+- **Forge Studio dashboard** (`pnpm forge studio`) for project management
 - **Productivity scripts** (project scaffolding, render helper, upgrade automation)
 - **Offline reference** (`docs/remotion-reference.md`)
 - **Timeline utilities** (`@studio/timing`), **Anime.js bridge**, transitions, R3F, Pixi/Konva, WebGL effects

@@ -19,9 +19,6 @@ pnpm create:project
 # Forge Studio ダッシュボード起動（Web）
 pnpm forge studio
 
-# CLIフォールバックランチャー（dev/render）
-pnpm forge launch
-
 # 開発開始
 cd apps/<name> && pnpm dev
 ```
@@ -41,11 +38,13 @@ pnpm forge studio
 # 2) 新しい作品を作る（2D）
 pnpm create:project
 
-# 3) ターミナルランチャーで即起動
-pnpm forge launch
+# 3) 開発を開始
+cd apps/<name> && pnpm dev
+
+# 4) 仕上げにレンダー
+pnpm forge render --app <name> --composition <id>
 ```
 
-`pnpm forge launch` では番号選択でアプリを選び、`dev` または `render` を実行できます。  
 `render` 成功時は、ブラウザで祝賀ページ（Confetti + 花火 + Achievement）が開きます。
 
 ## Forgeコマンド早見表
@@ -53,7 +52,6 @@ pnpm forge launch
 | コマンド                                            | 何をする                                                |
 | --------------------------------------------------- | ------------------------------------------------------- |
 | `pnpm forge studio`                                 | Next.js製 Studio ダッシュボードを起動（作品カード一覧） |
-| `pnpm forge launch`                                 | CLIランチャーを起動（番号選択で `dev/render`）          |
 | `pnpm forge render --app <name> --composition <id>` | 指定作品を直接レンダー                                  |
 | `pnpm create:project`                               | 新規作品を作成（`app.meta.json` とサムネを自動生成）    |
 | `pnpm create:project -- -t 3d`                      | 3Dテンプレートで新規作品を作成                          |
@@ -72,8 +70,8 @@ pnpm forge launch
 
 1. `pnpm forge studio` でカードを眺めて今日作る作品を決める。
 2. `pnpm create:project` で1本追加する。
-3. `pnpm forge launch` で `dev` を選んで調整する。
-4. `pnpm forge launch` で `render` を選ぶ。
+3. `cd apps/<name> && pnpm dev` で調整する。
+4. `pnpm forge render --app <name> --composition <id>` で仕上げる。
 5. 祝賀演出を見て、次の1本を作る。
 
 ## 前提条件
@@ -102,7 +100,7 @@ node -v && pnpm -v && ffmpeg -version
 - **pnpm workspaces** によるモノレポ運用
 - **pnpm Catalog による依存関係の一元管理**
 - **2D・3D テンプレート** 搭載（`apps/_template`、`apps/3D-template`）
-- **Forge Studio ダッシュボード**（`pnpm forge studio`）とCLIフォールバック（`pnpm forge launch`）
+- **Forge Studio ダッシュボード**（`pnpm forge studio`）で作品管理
 - **生産性スクリプト** (プロジェクト作成、レンダー補助、アップグレード自動化)
 - **オフライン参照** (`docs/remotion-reference.md`)
 - **タイムライン/アニメ/2D/3D/WebGL のユーティリティ群**
