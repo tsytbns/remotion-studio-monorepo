@@ -1,6 +1,12 @@
 import React from "react";
 import { loadFont as loadCormorant } from "@remotion/google-fonts/CormorantGaramond";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import {
+  Easing,
+  interpolate,
+  spring,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
 
 const { fontFamily: cormorantNormal } = loadCormorant("normal", {
   weights: ["500", "600", "700"],
@@ -57,19 +63,26 @@ export const SbiArtAuctionBanner: React.FC<SbiArtAuctionBannerProps> = ({
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const gleamPosition = interpolate(
+  const sheenProgress = interpolate(
     frame,
-    [Math.floor(1.25 * fps), Math.floor(2.05 * fps)],
-    [-130, 130],
+    [Math.floor(0.9 * fps), Math.floor(3 * fps)],
+    [0, 1],
     {
+      easing: Easing.bezier(0.22, 0.08, 0.18, 1),
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
     },
   );
-  const gleamOpacity = interpolate(
-    frame,
-    [Math.floor(1.35 * fps), Math.floor(1.6 * fps), Math.floor(2.15 * fps)],
-    [0, 0.45, 0],
+
+  const sheenPosition = interpolate(sheenProgress, [0, 1], [-36, 10], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  const sheenOpacity = interpolate(
+    sheenProgress,
+    [0, 0.2, 0.75, 1],
+    [0.08, 0.18, 0.16, 0.12],
     {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
@@ -103,12 +116,12 @@ export const SbiArtAuctionBanner: React.FC<SbiArtAuctionBannerProps> = ({
         <div
           style={{
             background:
-              "linear-gradient(105deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 35%, rgba(255,248,223,0.18) 44%, rgba(255,255,255,0.72) 50%, rgba(255,243,206,0.26) 57%, rgba(255,255,255,0) 66%, rgba(255,255,255,0) 100%)",
+              "linear-gradient(102deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.02) 18%, rgba(255,244,218,0.1) 34%, rgba(255,248,231,0.22) 50%, rgba(255,250,238,0.28) 58%, rgba(247,227,176,0.12) 72%, rgba(255,255,255,0.02) 88%, rgba(255,255,255,0) 100%)",
             inset: 0,
-            opacity: gleamOpacity,
+            opacity: sheenOpacity,
             pointerEvents: "none",
             position: "absolute",
-            transform: `translateX(${gleamPosition}%)`,
+            transform: `translateX(${sheenPosition}%)`,
           }}
         />
         <div

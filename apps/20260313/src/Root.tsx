@@ -109,6 +109,7 @@ export const Root: React.FC = () => {
           defaultProps={{
             ...mintRippleBlocksBackgroundDefaults,
             aspectMode: "wide",
+            theme: "mint",
           }}
           calculateMetadata={async () => transparentProResDefaults}
         />
@@ -123,6 +124,37 @@ export const Root: React.FC = () => {
           defaultProps={{
             ...mintRippleBlocksBackgroundDefaults,
             aspectMode: "portrait",
+            theme: "mint",
+          }}
+          calculateMetadata={async () => transparentProResDefaults}
+        />
+        <Composition
+          id="ChampagneRippleBackground16x9"
+          component={MintRippleBlocksBackground}
+          width={1920}
+          height={1080}
+          fps={60}
+          durationInFrames={180}
+          schema={mintRippleBlocksBackgroundSchema}
+          defaultProps={{
+            ...mintRippleBlocksBackgroundDefaults,
+            aspectMode: "wide",
+            theme: "champagne",
+          }}
+          calculateMetadata={async () => transparentProResDefaults}
+        />
+        <Composition
+          id="ChampagneRippleBackground4x5"
+          component={MintRippleBlocksBackground}
+          width={1080}
+          height={1350}
+          fps={60}
+          durationInFrames={180}
+          schema={mintRippleBlocksBackgroundSchema}
+          defaultProps={{
+            ...mintRippleBlocksBackgroundDefaults,
+            aspectMode: "portrait",
+            theme: "champagne",
           }}
           calculateMetadata={async () => transparentProResDefaults}
         />

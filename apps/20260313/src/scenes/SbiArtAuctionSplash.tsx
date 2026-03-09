@@ -52,11 +52,7 @@ export const SbiArtAuctionSplash: React.FC<SbiArtAuctionSplashProps> = ({
       <div
         style={{
           position: "relative",
-          transform: `translateY(${interpolate(pushIn, [0, 1], [10, -6])}px) scale(${interpolate(
-            pushIn,
-            [0, 1],
-            [0.98, 1.03],
-          )})`,
+          transform: `translateY(${interpolate(pushIn, [0, 1], [10, -6])}px)`,
         }}
       >
         <div

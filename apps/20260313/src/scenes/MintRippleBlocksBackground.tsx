@@ -10,6 +10,7 @@ import { z } from "zod";
 
 export const mintRippleBlocksBackgroundSchema = z.object({
   aspectMode: z.enum(["auto", "wide", "portrait"]),
+  theme: z.enum(["mint", "champagne"]),
 });
 
 export type MintRippleBlocksBackgroundProps = z.infer<
@@ -19,18 +20,8 @@ export type MintRippleBlocksBackgroundProps = z.infer<
 export const mintRippleBlocksBackgroundDefaults: MintRippleBlocksBackgroundProps =
   {
     aspectMode: "auto",
+    theme: "mint",
   };
-
-const COLORS = {
-  baseDark: "#0A5B55",
-  base: "#0F7D74",
-  baseLight: "#18A79B",
-  panelDeep: "#084D48",
-  panelMid: "#0D6E68",
-  panelLight: "#159084",
-  panelMist: "rgba(188,244,236,0.10)",
-  edgeSoft: "rgba(255,255,255,0.05)",
-};
 
 type BlockName =
   | "echoA"
@@ -48,7 +39,6 @@ type NormalizedRect = {
 };
 
 type BlockDefinition = {
-  color: string;
   durationInFrames: number;
   name: BlockName;
   peakOpacity: number;
@@ -57,12 +47,142 @@ type BlockDefinition = {
   wide: NormalizedRect;
 };
 
+type RippleThemeName = "mint" | "champagne";
+
+type RippleTheme = {
+  baseSolid: string;
+  baseGradient: string;
+  centerLift: string;
+  globalGlow: string;
+  vignette: string;
+  midToneWash: string;
+  centerBloom: string;
+  innerFrameStroke: string;
+  innerShade: string;
+  edgeGloss: string;
+  leftShade: string;
+  rightShade: string;
+  safeAreaWash: string;
+  outerFrameStroke: string;
+  farVignette: string;
+  finalBloom: string;
+  topBottomFilm: string;
+  gridLine: string;
+  blockTopFade: string;
+  blocks: Record<BlockName, string>;
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = hex.replace("#", "");
+  const value =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((char) => `${char}${char}`)
+          .join("")
+      : normalized;
+
+  const red = Number.parseInt(value.slice(0, 2), 16);
+  const green = Number.parseInt(value.slice(2, 4), 16);
+  const blue = Number.parseInt(value.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+};
+
+const THEMES: Record<RippleThemeName, RippleTheme> = {
+  mint: {
+    baseSolid: "#0F7D74",
+    baseGradient:
+      "linear-gradient(160deg, #0A5B55 0%, #0F7D74 32%, #18A79B 68%, #0F7D74 100%)",
+    centerLift:
+      "radial-gradient(circle at 50% 42%, rgba(192, 247, 238, 0.10) 0%, rgba(192, 247, 238, 0.05) 28%, rgba(192, 247, 238, 0) 68%)",
+    globalGlow:
+      "radial-gradient(circle at 50% 50%, rgba(188, 244, 236, 0.14) 0%, rgba(188, 244, 236, 0.06) 42%, rgba(188, 244, 236, 0) 78%)",
+    vignette:
+      "radial-gradient(ellipse 92% 78% at 50% 50%, rgba(0,0,0,0) 36%, rgba(2, 42, 38, 0.14) 100%)",
+    midToneWash:
+      "radial-gradient(circle at 50% 56%, rgba(15, 125, 116, 0.18) 0%, rgba(15, 125, 116, 0.1) 30%, rgba(15, 125, 116, 0) 68%)",
+    centerBloom:
+      "radial-gradient(circle at 50% 50%, rgba(15,125,116,0.12) 0%, rgba(15,125,116,0.06) 48%, rgba(15,125,116,0) 100%)",
+    innerFrameStroke: "rgba(188,244,236,0.10)",
+    innerShade:
+      "radial-gradient(circle at 50% 50%, rgba(10,91,85,0.05) 0%, rgba(10,91,85,0.02) 50%, rgba(10,91,85,0) 100%)",
+    edgeGloss:
+      "linear-gradient(115deg, rgba(255,255,255,0.012) 0%, rgba(255,255,255,0) 24%, rgba(255,255,255,0) 76%, rgba(255,255,255,0.018) 100%)",
+    leftShade:
+      "linear-gradient(90deg, rgba(8,77,72,0.08) 0%, rgba(8,77,72,0) 100%)",
+    rightShade:
+      "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(4,53,48,0.08) 100%)",
+    safeAreaWash:
+      "linear-gradient(180deg, rgba(15,125,116,0.03) 0%, rgba(15,125,116,0.02) 45%, rgba(15,125,116,0.01) 100%)",
+    outerFrameStroke: "rgba(255,255,255,0.02)",
+    farVignette:
+      "radial-gradient(circle at 50% 50%, rgba(24,167,155,0) 0%, rgba(24,167,155,0) 42%, rgba(0,0,0,0.05) 100%)",
+    finalBloom:
+      "radial-gradient(circle at 50% 50%, rgba(188,244,236,0.05) 0%, rgba(188,244,236,0.02) 52%, rgba(188,244,236,0) 100%)",
+    topBottomFilm:
+      "linear-gradient(180deg, rgba(255,255,255,0.008) 0%, rgba(255,255,255,0) 16%, rgba(0,0,0,0) 84%, rgba(0,0,0,0.03) 100%)",
+    gridLine: "rgba(255,255,255,0.4)",
+    blockTopFade: "rgba(255,255,255,0.02)",
+    blocks: {
+      echoA: "#18A79B",
+      heroDark: "#084D48",
+      topGlaze: "#159084",
+      bottomLeft: "#0D6E68",
+      bottomRight: "#18A79B",
+      echoB: "#159084",
+    },
+  },
+  champagne: {
+    baseSolid: "#E7DFCD",
+    baseGradient:
+      "linear-gradient(160deg, #F0EBE0 0%, #E7DFCD 30%, #D9CFAF 58%, #C0B07B 82%, #9B8B54 100%)",
+    centerLift:
+      "radial-gradient(circle at 50% 42%, rgba(255, 248, 233, 0.12) 0%, rgba(255, 248, 233, 0.06) 28%, rgba(255, 248, 233, 0) 68%)",
+    globalGlow:
+      "radial-gradient(circle at 50% 50%, rgba(255, 246, 227, 0.16) 0%, rgba(255, 246, 227, 0.07) 42%, rgba(255, 246, 227, 0) 78%)",
+    vignette:
+      "radial-gradient(ellipse 92% 78% at 50% 50%, rgba(0,0,0,0) 36%, rgba(72, 61, 28, 0.12) 100%)",
+    midToneWash:
+      "radial-gradient(circle at 50% 56%, rgba(201, 183, 120, 0.16) 0%, rgba(201, 183, 120, 0.08) 30%, rgba(201, 183, 120, 0) 68%)",
+    centerBloom:
+      "radial-gradient(circle at 50% 50%, rgba(233,219,176,0.08) 0%, rgba(233,219,176,0.04) 48%, rgba(233,219,176,0) 100%)",
+    innerFrameStroke: "rgba(255,248,233,0.08)",
+    innerShade:
+      "radial-gradient(circle at 50% 50%, rgba(138,122,62,0.05) 0%, rgba(138,122,62,0.02) 50%, rgba(138,122,62,0) 100%)",
+    edgeGloss:
+      "linear-gradient(115deg, rgba(255,255,255,0.018) 0%, rgba(255,255,255,0) 24%, rgba(255,255,255,0) 76%, rgba(255,255,255,0.024) 100%)",
+    leftShade:
+      "linear-gradient(90deg, rgba(125,108,57,0.06) 0%, rgba(125,108,57,0) 100%)",
+    rightShade:
+      "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(87,72,27,0.07) 100%)",
+    safeAreaWash:
+      "linear-gradient(180deg, rgba(238,228,201,0.04) 0%, rgba(238,228,201,0.025) 45%, rgba(238,228,201,0.01) 100%)",
+    outerFrameStroke: "rgba(255,255,255,0.035)",
+    farVignette:
+      "radial-gradient(circle at 50% 50%, rgba(233,219,176,0) 0%, rgba(233,219,176,0) 42%, rgba(0,0,0,0.04) 100%)",
+    finalBloom:
+      "radial-gradient(circle at 50% 50%, rgba(255,246,229,0.05) 0%, rgba(255,246,229,0.02) 52%, rgba(255,246,229,0) 100%)",
+    topBottomFilm:
+      "linear-gradient(180deg, rgba(255,255,255,0.012) 0%, rgba(255,255,255,0) 16%, rgba(0,0,0,0) 84%, rgba(0,0,0,0.025) 100%)",
+    gridLine: "rgba(255,255,255,0.36)",
+    blockTopFade: "rgba(255,255,255,0.03)",
+    blocks: {
+      echoA: "#EDE6D4",
+      heroDark: "#A18F57",
+      topGlaze: "#EFE8D7",
+      bottomLeft: "#B9AB76",
+      bottomRight: "#D6CAAB",
+      echoB: "#E7DFCC",
+    },
+  },
+};
+
 const BLOCKS: BlockDefinition[] = [
   {
     name: "echoA",
     wide: { x: 0, y: 0, w: 0.62, h: 0.38 },
     portrait: { x: 0, y: 0, w: 0.68, h: 0.34 },
-    color: COLORS.baseLight,
     peakOpacity: 0.05,
     startFrame: 8,
     durationInFrames: 24,
@@ -71,7 +191,6 @@ const BLOCKS: BlockDefinition[] = [
     name: "heroDark",
     wide: { x: 0.3, y: 0.12, w: 0.7, h: 0.56 },
     portrait: { x: 0.2, y: 0.14, w: 0.8, h: 0.49 },
-    color: COLORS.panelDeep,
     peakOpacity: 0.28,
     startFrame: 20,
     durationInFrames: 34,
@@ -80,7 +199,6 @@ const BLOCKS: BlockDefinition[] = [
     name: "topGlaze",
     wide: { x: 0.5, y: 0.12, w: 0.5, h: 0.27 },
     portrait: { x: 0.42, y: 0.14, w: 0.58, h: 0.23 },
-    color: COLORS.panelLight,
     peakOpacity: 0.1,
     startFrame: 28,
     durationInFrames: 26,
@@ -89,7 +207,6 @@ const BLOCKS: BlockDefinition[] = [
     name: "bottomLeft",
     wide: { x: 0, y: 0.5, w: 0.5, h: 0.5 },
     portrait: { x: 0, y: 0.57, w: 0.44, h: 0.43 },
-    color: COLORS.panelMid,
     peakOpacity: 0.2,
     startFrame: 42,
     durationInFrames: 32,
@@ -98,7 +215,6 @@ const BLOCKS: BlockDefinition[] = [
     name: "bottomRight",
     wide: { x: 0.3, y: 0.48, w: 0.53, h: 0.52 },
     portrait: { x: 0.22, y: 0.53, w: 0.56, h: 0.47 },
-    color: COLORS.baseLight,
     peakOpacity: 0.14,
     startFrame: 52,
     durationInFrames: 36,
@@ -107,7 +223,6 @@ const BLOCKS: BlockDefinition[] = [
     name: "echoB",
     wide: { x: 0.38, y: 0.18, w: 0.62, h: 0.55 },
     portrait: { x: 0.34, y: 0.24, w: 0.66, h: 0.49 },
-    color: COLORS.panelLight,
     peakOpacity: 0.07,
     startFrame: 64,
     durationInFrames: 30,
@@ -135,18 +250,20 @@ const mixRect = (
   };
 };
 
-const revealEasing = Easing.bezier(0.16, 1, 0.3, 1);
-const settleEasing = Easing.bezier(0.22, 0, 0.18, 1);
-const sheenEasing = Easing.bezier(0.2, 0.04, 0.3, 1);
+const blockFadeEasing = Easing.inOut(Easing.ease);
 
 export const MintRippleBlocksBackground: React.FC<
   MintRippleBlocksBackgroundProps
-> = ({ aspectMode }) => {
+> = ({ aspectMode, theme }) => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
+  const themeTokens = THEMES[theme];
+  const globalGlowOpacity = theme === "champagne" ? 0.48 : 0.55;
+  const innerFrameOpacity = theme === "champagne" ? 0.04 : 0.03;
+  const gridOpacity = theme === "champagne" ? 0.015 : 0.02;
+  const blockStartCornerHighlight =
+    theme === "champagne" ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)";
 
-  const vw = width / 100;
-  const vh = height / 100;
   const vmin = Math.min(width, height) / 100;
   const vmax = Math.max(width, height) / 100;
 
@@ -162,51 +279,24 @@ export const MintRippleBlocksBackground: React.FC<
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const settleMultiplier = interpolate(frame, [96, 150], [1, 0.82], {
-    easing: settleEasing,
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const sheenWidth = vw * 22;
-  const sheenTravel = interpolate(
-    frame,
-    [18, 92],
-    [-sheenWidth * 2, width + sheenWidth * 2],
-    {
-      easing: sheenEasing,
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    },
-  );
-  const sheenOpacity = interpolate(
-    frame,
-    [18, 32, 78, 92],
-    [0, 0.08, 0.06, 0],
-    {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    },
-  );
-  const borderWidth = Math.max(1, vmin * 0.11);
 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: COLORS.base,
+        backgroundColor: themeTokens.baseSolid,
         overflow: "hidden",
       }}
     >
       <AbsoluteFill
         style={{
           opacity: baseOpacity,
-          background: `linear-gradient(160deg, ${COLORS.baseDark} 0%, ${COLORS.base} 32%, ${COLORS.baseLight} 68%, ${COLORS.base} 100%)`,
+          background: themeTokens.baseGradient,
         }}
       />
       <AbsoluteFill
         style={{
           opacity: baseOpacity,
-          background:
-            "radial-gradient(circle at 50% 42%, rgba(192, 247, 238, 0.10) 0%, rgba(192, 247, 238, 0.05) 28%, rgba(192, 247, 238, 0) 68%)",
+          background: themeTokens.centerLift,
         }}
       />
       <div
@@ -216,31 +306,26 @@ export const MintRippleBlocksBackground: React.FC<
           top: height * 0.5 - height * 0.29,
           width: width * 0.72,
           height: height * 0.58,
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(188, 244, 236, 0.14) 0%, rgba(188, 244, 236, 0.06) 42%, rgba(188, 244, 236, 0) 78%)",
+          background: themeTokens.globalGlow,
           filter: `blur(${vmin * 3.2}px)`,
-          opacity: 0.55,
+          opacity: globalGlowOpacity,
           pointerEvents: "none",
         }}
       />
       {BLOCKS.map((block) => {
         const rect = mixRect(block.portrait, block.wide, aspectMix);
-        const revealProgress = interpolate(
+        const fadeProgress = interpolate(
           frame,
           [block.startFrame, block.startFrame + block.durationInFrames],
           [0, 1],
           {
-            easing: revealEasing,
+            easing: blockFadeEasing,
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
           },
         );
-        const blockOpacity =
-          revealProgress * block.peakOpacity * settleMultiplier;
-        const blockScale = interpolate(revealProgress, [0, 1], [0.985, 1], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        });
+        const blockOpacity = fadeProgress * block.peakOpacity;
+        const blockColor = themeTokens.blocks[block.name];
 
         return (
           <div
@@ -252,40 +337,26 @@ export const MintRippleBlocksBackground: React.FC<
               width: rect.w * width,
               height: rect.h * height,
               opacity: blockOpacity,
-              transform: `scale(${blockScale})`,
-              transformOrigin: "top left",
-              border: `${borderWidth}px solid ${COLORS.edgeSoft}`,
               boxSizing: "border-box",
-              background: `linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 34%, rgba(0,0,0,0.05) 100%), ${block.color}`,
+              background: [
+                `linear-gradient(135deg, ${blockStartCornerHighlight} 0%, rgba(255,255,255,0) 18%, rgba(255,255,255,0) 100%)`,
+                `linear-gradient(135deg, ${hexToRgba(blockColor, 0.96)} 0%, ${hexToRgba(blockColor, 0.8)} 18%, ${hexToRgba(blockColor, 0.48)} 42%, ${hexToRgba(blockColor, 0.16)} 68%, ${hexToRgba(blockColor, 0.04)} 84%, ${hexToRgba(blockColor, 0)} 100%)`,
+                `linear-gradient(135deg, ${themeTokens.blockTopFade} 0%, rgba(255,255,255,0) 36%, rgba(255,255,255,0) 100%)`,
+              ].join(","),
             }}
           />
         );
       })}
-      <div
-        style={{
-          position: "absolute",
-          left: sheenTravel,
-          top: -(vh * 18),
-          width: sheenWidth,
-          height: vh * 136,
-          opacity: sheenOpacity,
-          transform: "rotate(-18deg)",
-          transformOrigin: "center",
-          background:
-            "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(223,255,250,0.18) 18%, rgba(255,255,255,0.7) 50%, rgba(223,255,250,0.18) 82%, rgba(255,255,255,0) 100%)",
-          pointerEvents: "none",
-        }}
-      />
       <AbsoluteFill
         style={{
-          background: `radial-gradient(ellipse 92% 78% at 50% 50%, rgba(0,0,0,0) 36%, rgba(2, 42, 38, 0.14) 100%)`,
+          background: themeTokens.vignette,
           opacity: 0.52,
           pointerEvents: "none",
         }}
       />
       <AbsoluteFill
         style={{
-          background: `radial-gradient(circle at 50% 56%, rgba(15, 125, 116, 0.18) 0%, rgba(15, 125, 116, 0.1) 30%, rgba(15, 125, 116, 0) 68%)`,
+          background: themeTokens.midToneWash,
           opacity: 0.72,
           pointerEvents: "none",
         }}
@@ -304,8 +375,7 @@ export const MintRippleBlocksBackground: React.FC<
           top: height * 0.25,
           width: width * 0.64,
           height: height * 0.42,
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(15,125,116,0.12) 0%, rgba(15,125,116,0.06) 48%, rgba(15,125,116,0) 100%)",
+          background: themeTokens.centerBloom,
           opacity: 0.75,
           pointerEvents: "none",
         }}
@@ -317,8 +387,8 @@ export const MintRippleBlocksBackground: React.FC<
           top: height * 0.12,
           width: width * 0.52,
           height: height * 0.7,
-          border: `${Math.max(1, vmin * 0.06)}px solid ${COLORS.panelMist}`,
-          opacity: 0.03,
+          border: `${Math.max(1, vmin * 0.06)}px solid ${themeTokens.innerFrameStroke}`,
+          opacity: innerFrameOpacity,
           boxSizing: "border-box",
           pointerEvents: "none",
         }}
@@ -330,8 +400,7 @@ export const MintRippleBlocksBackground: React.FC<
           top: height * 0.18,
           width: width * 0.56,
           height: height * 0.52,
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(10,91,85,0.05) 0%, rgba(10,91,85,0.02) 50%, rgba(10,91,85,0) 100%)",
+          background: themeTokens.innerShade,
           opacity: 0.8,
           pointerEvents: "none",
         }}
@@ -340,8 +409,7 @@ export const MintRippleBlocksBackground: React.FC<
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(115deg, rgba(255,255,255,0.012) 0%, rgba(255,255,255,0) 24%, rgba(255,255,255,0) 76%, rgba(255,255,255,0.018) 100%)",
+          background: themeTokens.edgeGloss,
           pointerEvents: "none",
         }}
       />
@@ -352,8 +420,7 @@ export const MintRippleBlocksBackground: React.FC<
           top: 0,
           width: width * 0.18,
           height: height,
-          background:
-            "linear-gradient(90deg, rgba(8,77,72,0.08) 0%, rgba(8,77,72,0) 100%)",
+          background: themeTokens.leftShade,
           pointerEvents: "none",
         }}
       />
@@ -364,8 +431,7 @@ export const MintRippleBlocksBackground: React.FC<
           bottom: 0,
           width: width * 0.16,
           height: height * 0.28,
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(4,53,48,0.08) 100%)",
+          background: themeTokens.rightShade,
           pointerEvents: "none",
         }}
       />
@@ -376,8 +442,7 @@ export const MintRippleBlocksBackground: React.FC<
           top: height * 0.22,
           width: width * 0.4,
           height: height * 0.36,
-          background:
-            "linear-gradient(180deg, rgba(15,125,116,0.03) 0%, rgba(15,125,116,0.02) 45%, rgba(15,125,116,0.01) 100%)",
+          background: themeTokens.safeAreaWash,
           pointerEvents: "none",
         }}
       />
@@ -389,7 +454,7 @@ export const MintRippleBlocksBackground: React.FC<
           width: width * 0.84,
           height: height * 0.88,
           boxSizing: "border-box",
-          border: `${Math.max(1, vmin * 0.04)}px solid rgba(255,255,255,0.02)`,
+          border: `${Math.max(1, vmin * 0.04)}px solid ${themeTokens.outerFrameStroke}`,
           pointerEvents: "none",
         }}
       />
@@ -397,8 +462,7 @@ export const MintRippleBlocksBackground: React.FC<
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(24,167,155,0) 0%, rgba(24,167,155,0) 42%, rgba(0,0,0,0.05) 100%)",
+          background: themeTokens.farVignette,
           pointerEvents: "none",
         }}
       />
@@ -409,8 +473,7 @@ export const MintRippleBlocksBackground: React.FC<
           top: height * 0.2,
           width: width * 0.52,
           height: height * 0.44,
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(188,244,236,0.05) 0%, rgba(188,244,236,0.02) 52%, rgba(188,244,236,0) 100%)",
+          background: themeTokens.finalBloom,
           pointerEvents: "none",
         }}
       />
@@ -418,8 +481,7 @@ export const MintRippleBlocksBackground: React.FC<
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.008) 0%, rgba(255,255,255,0) 16%, rgba(0,0,0,0) 84%, rgba(0,0,0,0.03) 100%)",
+          background: themeTokens.topBottomFilm,
           pointerEvents: "none",
         }}
       />
@@ -427,9 +489,8 @@ export const MintRippleBlocksBackground: React.FC<
         style={{
           position: "absolute",
           inset: 0,
-          opacity: 0.02,
-          backgroundImage:
-            "repeating-linear-gradient(0deg, rgba(255,255,255,0.4) 0 1px, transparent 1px 6vh), repeating-linear-gradient(90deg, rgba(255,255,255,0.4) 0 1px, transparent 1px 6vw)",
+          opacity: gridOpacity,
+          backgroundImage: `repeating-linear-gradient(0deg, ${themeTokens.gridLine} 0 1px, transparent 1px 6vh), repeating-linear-gradient(90deg, ${themeTokens.gridLine} 0 1px, transparent 1px 6vw)`,
           pointerEvents: "none",
         }}
       />

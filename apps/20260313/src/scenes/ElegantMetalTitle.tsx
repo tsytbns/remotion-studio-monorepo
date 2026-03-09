@@ -220,21 +220,16 @@ const metalBaseBackground = [
   "repeating-linear-gradient(112deg, rgba(255,255,255,0.02) 0 8px, rgba(255,255,255,0.1) 8px 11px, rgba(95,68,18,0.16) 11px 18px)",
 ].join(",");
 
-const diffuseSweepBackground =
-  "linear-gradient(104deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 34%, rgba(255,244,213,0.14) 44%, rgba(255,250,236,0.8) 50%, rgba(255,255,255,0.96) 53%, rgba(255,245,210,0.35) 59%, rgba(255,255,255,0) 69%, rgba(255,255,255,0) 100%)";
-
-const glintBackground =
-  "linear-gradient(109deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 47.8%, rgba(255,255,255,0.98) 49.7%, rgba(255,252,245,1) 50%, rgba(255,239,185,0.92) 50.7%, rgba(255,255,255,0) 53%, rgba(255,255,255,0) 100%)";
+const diffuseHighlightBackground =
+  "linear-gradient(104deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.02) 18%, rgba(255,246,222,0.08) 34%, rgba(255,248,232,0.18) 50%, rgba(255,250,240,0.24) 58%, rgba(255,245,214,0.1) 72%, rgba(255,255,255,0.02) 86%, rgba(255,255,255,0) 100%)";
 
 type MetallicTextProps = {
   fontFamily: string;
   fontSize: number;
   fontStyle: "normal" | "italic";
   fontWeight: string;
-  glintOpacity: number;
-  glintPosition: number;
-  sweepOpacity: number;
-  sweepPosition: number;
+  highlightOpacity: number;
+  highlightPosition: number;
   text: string;
   textTransform?: "uppercase";
   tracking: string;
@@ -245,10 +240,8 @@ const MetallicText: React.FC<MetallicTextProps> = ({
   fontSize,
   fontStyle,
   fontWeight,
-  glintOpacity,
-  glintPosition,
-  sweepOpacity,
-  sweepPosition,
+  highlightOpacity,
+  highlightPosition,
   text,
   textTransform,
   tracking,
@@ -306,12 +299,12 @@ const MetallicText: React.FC<MetallicTextProps> = ({
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
-          backgroundImage: diffuseSweepBackground,
-          backgroundPosition: `${sweepPosition}% 0%`,
+          backgroundImage: diffuseHighlightBackground,
+          backgroundPosition: `${highlightPosition}% 0%`,
           backgroundRepeat: "no-repeat",
-          backgroundSize: "220% 100%",
+          backgroundSize: "280% 100%",
           color: "transparent",
-          opacity: sweepOpacity,
+          opacity: highlightOpacity,
           position: "absolute",
           inset: 0,
         }}
@@ -330,41 +323,19 @@ const MetallicText: React.FC<MetallicTextProps> = ({
       >
         {text}
       </div>
-      <div
-        style={{
-          ...sharedTextStyle,
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          backgroundImage: glintBackground,
-          backgroundPosition: `${glintPosition}% 0%`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "180% 100%",
-          color: "transparent",
-          opacity: glintOpacity,
-          position: "absolute",
-          inset: 0,
-        }}
-      >
-        {text}
-      </div>
     </div>
   );
 };
 
 type MetallicRuleProps = {
-  glintOpacity: number;
-  glintPosition: number;
-  sweepOpacity: number;
-  sweepPosition: number;
+  highlightOpacity: number;
+  highlightPosition: number;
   width: number;
 };
 
 const MetallicRule: React.FC<MetallicRuleProps> = ({
-  glintOpacity,
-  glintPosition,
-  sweepOpacity,
-  sweepPosition,
+  highlightOpacity,
+  highlightPosition,
   width,
 }) => {
   return (
@@ -388,26 +359,13 @@ const MetallicRule: React.FC<MetallicRuleProps> = ({
       />
       <div
         style={{
-          backgroundImage: diffuseSweepBackground,
-          backgroundPosition: `${sweepPosition}% 0%`,
+          backgroundImage: diffuseHighlightBackground,
+          backgroundPosition: `${highlightPosition}% 0%`,
           backgroundRepeat: "no-repeat",
-          backgroundSize: "220% 100%",
+          backgroundSize: "280% 100%",
           borderRadius: 999,
           inset: -1,
-          opacity: sweepOpacity,
-          position: "absolute",
-        }}
-      />
-      <div
-        style={{
-          backgroundImage: glintBackground,
-          backgroundPosition: `${glintPosition}% 0%`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "180% 100%",
-          borderRadius: 999,
-          filter: "blur(0.3px)",
-          inset: -2,
-          opacity: glintOpacity,
+          opacity: highlightOpacity,
           position: "absolute",
         }}
       />
@@ -481,42 +439,61 @@ export const ElegantMetalTitle: React.FC<ElegantMetalTitleProps> = ({
     });
   }, [hasSecondaryText, safeSecondaryText, width]);
 
-  const diffuseProgress = interpolate(frame, [0, 90], [0, 1], {
-    easing: Easing.bezier(0.2, 0.1, 0.22, 1),
+  const highlightProgress = interpolate(frame, [0, 180], [0, 1], {
+    easing: Easing.bezier(0.22, 0.08, 0.18, 1),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const macroProgress = interpolate(frame, [91, 150], [0, 1], {
-    easing: Easing.bezier(0.18, 0.04, 0.22, 0.98),
+
+  const highlightPosition = interpolate(highlightProgress, [0, 1], [-78, -18], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const glintTravel = interpolate(frame, [151, 168], [-120, 118], {
-    easing: Easing.bezier(0.34, 0, 0.72, 1),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const glintOpacity = interpolate(
-    frame,
-    [151, 158, 166, 180],
-    [0, 0.92, 0.72, 0],
+
+  const highlightOpacity = interpolate(
+    highlightProgress,
+    [0, 0.25, 0.7, 1],
+    [0.12, 0.2, 0.18, 0.14],
     {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
     },
   );
 
-  const sweepPosition = frame <= 90 ? -145 + diffuseProgress * 255 : 42;
-  const sweepOpacity =
-    frame <= 90
-      ? interpolate(diffuseProgress, [0, 1], [0.54, 0.84], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        })
-      : interpolate(macroProgress, [0, 1], [0.5, 0.34], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        });
+  const secondaryHighlightOpacity = interpolate(
+    highlightProgress,
+    [0, 0.25, 0.7, 1],
+    [0.1, 0.17, 0.15, 0.12],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    },
+  );
+
+  const ruleHighlightOpacity = interpolate(
+    highlightProgress,
+    [0, 0.25, 0.7, 1],
+    [0.11, 0.18, 0.16, 0.13],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    },
+  );
+
+  const glowOpacity = interpolate(
+    highlightProgress,
+    [0, 0.4, 1],
+    [0.74, 0.66, 0.58],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    },
+  );
+
+  const glowDrift = interpolate(highlightProgress, [0, 1], [-1.5, 1.5], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
   const ruleWidth = clamp(
     Math.max(
@@ -553,30 +530,21 @@ export const ElegantMetalTitle: React.FC<ElegantMetalTitleProps> = ({
             gap: hasSecondaryText ? 24 : 0,
             position: "relative",
             textAlign: "center",
-            transform: `perspective(2200px) translateY(${interpolate(
-              macroProgress,
-              [0, 1],
-              [0, -7],
-            )}px) scale(${interpolate(macroProgress, [0, 1], [1, 1.036])}) rotateX(${interpolate(
-              macroProgress,
-              [0, 1],
-              [0, -1.35],
-            )}deg) rotateY(${interpolate(macroProgress, [0, 1], [0, 1.85])}deg)`,
-            transformStyle: "preserve-3d",
             width: width * 0.62,
           }}
         >
           <div
             style={{
               background:
-                "radial-gradient(circle at 50% 50%, rgba(206, 169, 80, 0.22) 0%, rgba(206, 169, 80, 0.06) 38%, rgba(206, 169, 80, 0) 72%)",
+                "radial-gradient(circle at 50% 50%, rgba(206, 169, 80, 0.16) 0%, rgba(206, 169, 80, 0.05) 38%, rgba(206, 169, 80, 0) 72%)",
               filter: "blur(42px)",
               height: 220,
               left: "50%",
+              opacity: glowOpacity,
               pointerEvents: "none",
               position: "absolute",
               top: "50%",
-              transform: "translate(-50%, -46%)",
+              transform: `translate(-50%, calc(-46% + ${glowDrift}px))`,
               width: Math.max(ruleWidth * 1.15, width * 0.3),
             }}
           />
@@ -585,10 +553,8 @@ export const ElegantMetalTitle: React.FC<ElegantMetalTitleProps> = ({
             fontSize={primaryLayout.fontSize}
             fontStyle="normal"
             fontWeight="600"
-            glintOpacity={glintOpacity}
-            glintPosition={glintTravel}
-            sweepOpacity={sweepOpacity}
-            sweepPosition={sweepPosition}
+            highlightOpacity={highlightOpacity}
+            highlightPosition={highlightPosition}
             text={primaryLayout.text}
             textTransform={primaryUppercase ? "uppercase" : undefined}
             tracking={primaryLayout.text.includes("\n") ? "0.03em" : "0.055em"}
@@ -596,10 +562,8 @@ export const ElegantMetalTitle: React.FC<ElegantMetalTitleProps> = ({
           {hasSecondaryText ? (
             <>
               <MetallicRule
-                glintOpacity={glintOpacity}
-                glintPosition={glintTravel}
-                sweepOpacity={sweepOpacity}
-                sweepPosition={sweepPosition}
+                highlightOpacity={ruleHighlightOpacity}
+                highlightPosition={highlightPosition}
                 width={ruleWidth}
               />
               <MetallicText
@@ -607,10 +571,8 @@ export const ElegantMetalTitle: React.FC<ElegantMetalTitleProps> = ({
                 fontSize={secondaryLayout?.fontSize ?? 46}
                 fontStyle="italic"
                 fontWeight="500"
-                glintOpacity={glintOpacity}
-                glintPosition={glintTravel}
-                sweepOpacity={sweepOpacity * 0.82}
-                sweepPosition={sweepPosition}
+                highlightOpacity={secondaryHighlightOpacity}
+                highlightPosition={highlightPosition}
                 text={secondaryLayout?.text ?? ""}
                 tracking="0.018em"
               />
