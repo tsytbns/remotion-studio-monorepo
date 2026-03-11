@@ -1,7 +1,7 @@
 import React from "react";
 import {
-  Composition,
   AbsoluteFill,
+  Composition,
   Folder,
   useCurrentFrame,
   useVideoConfig,
@@ -25,6 +25,17 @@ import {
   mintRippleBlocksBackgroundDefaults,
   mintRippleBlocksBackgroundSchema,
 } from "./scenes/MintRippleBlocksBackground";
+import {
+  ModernLegacyOpening,
+  calculateModernLegacyOpeningMetadata,
+  modernLegacyOpeningDefaults,
+  modernLegacyOpeningSchema,
+} from "./scenes/modernLegacyOpening/ModernLegacyOpening";
+import {
+  ModernLegacyArtworkReveal,
+  modernLegacyArtworkRevealDefaults,
+  modernLegacyArtworkRevealSchema,
+} from "./scenes/modernLegacyArtworkReveal/ModernLegacyArtworkReveal";
 
 // These placeholders are replaced by scripts/create-project.ts when generating a new project
 const WIDTH = 1350;
@@ -201,22 +212,92 @@ export const Root: React.FC = () => {
         schema={linkedParticlesSchema}
         defaultProps={linkedParticlesDefaults}
       />
-      <Composition
-        id="AuctionModernLegacy"
-        component={AuctionModernLegacy}
-        width={1080}
-        height={1350}
-        fps={FPS}
-        durationInFrames={DURATION}
-      />
-      <Composition
-        id="AuctionBloomNow"
-        component={AuctionBloomNow}
-        width={1080}
-        height={1350}
-        fps={FPS}
-        durationInFrames={DURATION}
-      />
+      <Folder name="Auction-Openings">
+        <Composition
+          id="ModernLegacyOpening"
+          component={ModernLegacyOpening}
+          width={1080}
+          height={1920}
+          fps={FPS}
+          durationInFrames={360}
+          schema={modernLegacyOpeningSchema}
+          defaultProps={modernLegacyOpeningDefaults}
+          calculateMetadata={calculateModernLegacyOpeningMetadata}
+        />
+        <Composition
+          id="ModernLegacyOpeningWide"
+          component={ModernLegacyOpening}
+          width={1920}
+          height={1080}
+          fps={FPS}
+          durationInFrames={360}
+          schema={modernLegacyOpeningSchema}
+          defaultProps={modernLegacyOpeningDefaults}
+          calculateMetadata={calculateModernLegacyOpeningMetadata}
+        />
+      </Folder>
+      <Folder name="Auction-Templates">
+        <Composition
+          id="ModernLegacyArtworkReveal"
+          component={ModernLegacyArtworkReveal}
+          width={1080}
+          height={1920}
+          fps={FPS}
+          durationInFrames={150}
+          schema={modernLegacyArtworkRevealSchema}
+          defaultProps={modernLegacyArtworkRevealDefaults}
+        />
+      </Folder>
+      <Folder name="Auction-Studies">
+        <Composition
+          id="AuctionModernLegacy"
+          component={AuctionModernLegacy}
+          width={1080}
+          height={1350}
+          fps={FPS}
+          durationInFrames={DURATION}
+        />
+        <Composition
+          id="AuctionBloomNow"
+          component={AuctionBloomNow}
+          width={1080}
+          height={1350}
+          fps={FPS}
+          durationInFrames={DURATION}
+        />
+      </Folder>
+      <Folder name="Backgrounds-Vertical">
+        <Composition
+          id="MintRippleBackground9x16"
+          component={MintRippleBlocksBackground}
+          width={1080}
+          height={1920}
+          fps={60}
+          durationInFrames={180}
+          schema={mintRippleBlocksBackgroundSchema}
+          defaultProps={{
+            ...mintRippleBlocksBackgroundDefaults,
+            aspectMode: "story",
+            theme: "mint",
+          }}
+          calculateMetadata={async () => transparentProResDefaults}
+        />
+        <Composition
+          id="ChampagneRippleBackground9x16"
+          component={MintRippleBlocksBackground}
+          width={1080}
+          height={1920}
+          fps={60}
+          durationInFrames={180}
+          schema={mintRippleBlocksBackgroundSchema}
+          defaultProps={{
+            ...mintRippleBlocksBackgroundDefaults,
+            aspectMode: "story",
+            theme: "champagne",
+          }}
+          calculateMetadata={async () => transparentProResDefaults}
+        />
+      </Folder>
     </>
   );
 };

@@ -9,7 +9,7 @@ import {
 import { z } from "zod";
 
 export const mintRippleBlocksBackgroundSchema = z.object({
-  aspectMode: z.enum(["auto", "wide", "portrait"]),
+  aspectMode: z.enum(["auto", "wide", "portrait", "story"]),
   theme: z.enum(["mint", "champagne"]),
 });
 
@@ -44,6 +44,7 @@ type BlockDefinition = {
   peakOpacity: number;
   portrait: NormalizedRect;
   startFrame: number;
+  story: NormalizedRect;
   wide: NormalizedRect;
 };
 
@@ -183,6 +184,7 @@ const BLOCKS: BlockDefinition[] = [
     name: "echoA",
     wide: { x: 0, y: 0, w: 0.62, h: 0.38 },
     portrait: { x: 0, y: 0, w: 0.68, h: 0.34 },
+    story: { x: 0, y: 0, w: 0.78, h: 0.26 },
     peakOpacity: 0.05,
     startFrame: 8,
     durationInFrames: 24,
@@ -191,6 +193,7 @@ const BLOCKS: BlockDefinition[] = [
     name: "heroDark",
     wide: { x: 0.3, y: 0.12, w: 0.7, h: 0.56 },
     portrait: { x: 0.2, y: 0.14, w: 0.8, h: 0.49 },
+    story: { x: 0.14, y: 0.18, w: 0.86, h: 0.38 },
     peakOpacity: 0.28,
     startFrame: 20,
     durationInFrames: 34,
@@ -199,6 +202,7 @@ const BLOCKS: BlockDefinition[] = [
     name: "topGlaze",
     wide: { x: 0.5, y: 0.12, w: 0.5, h: 0.27 },
     portrait: { x: 0.42, y: 0.14, w: 0.58, h: 0.23 },
+    story: { x: 0.36, y: 0.14, w: 0.64, h: 0.18 },
     peakOpacity: 0.1,
     startFrame: 28,
     durationInFrames: 26,
@@ -207,6 +211,7 @@ const BLOCKS: BlockDefinition[] = [
     name: "bottomLeft",
     wide: { x: 0, y: 0.5, w: 0.5, h: 0.5 },
     portrait: { x: 0, y: 0.57, w: 0.44, h: 0.43 },
+    story: { x: 0, y: 0.62, w: 0.46, h: 0.38 },
     peakOpacity: 0.2,
     startFrame: 42,
     durationInFrames: 32,
@@ -215,6 +220,7 @@ const BLOCKS: BlockDefinition[] = [
     name: "bottomRight",
     wide: { x: 0.3, y: 0.48, w: 0.53, h: 0.52 },
     portrait: { x: 0.22, y: 0.53, w: 0.56, h: 0.47 },
+    story: { x: 0.18, y: 0.58, w: 0.68, h: 0.42 },
     peakOpacity: 0.14,
     startFrame: 52,
     durationInFrames: 36,
@@ -223,6 +229,7 @@ const BLOCKS: BlockDefinition[] = [
     name: "echoB",
     wide: { x: 0.38, y: 0.18, w: 0.62, h: 0.55 },
     portrait: { x: 0.34, y: 0.24, w: 0.66, h: 0.49 },
+    story: { x: 0.28, y: 0.28, w: 0.72, h: 0.38 },
     peakOpacity: 0.07,
     startFrame: 64,
     durationInFrames: 30,
@@ -268,12 +275,24 @@ export const MintRippleBlocksBackground: React.FC<
   const vmax = Math.max(width, height) / 100;
 
   const aspect = width / height;
-  const aspectMix =
+  const storyMix =
+    aspectMode === "story"
+      ? 1
+      : aspectMode === "wide"
+        ? 0
+        : aspectMode === "portrait"
+          ? 0
+          : clamp((0.8 - aspect) / (0.8 - 0.5625), 0, 1);
+  const portraitMix =
     aspectMode === "wide"
       ? 1
-      : aspectMode === "portrait"
+      : aspectMode === "story"
         ? 0
-        : clamp((aspect - 0.8) / (1.7778 - 0.8), 0, 1);
+        : aspectMode === "portrait"
+          ? 0
+          : clamp((aspect - 0.8) / (1.7778 - 0.8), 0, 1);
+  const isStory =
+    aspectMode === "story" || (aspectMode === "auto" && aspect < 0.7);
 
   const baseOpacity = interpolate(frame, [0, 18], [0.94, 1], {
     extrapolateLeft: "clamp",
@@ -313,7 +332,10 @@ export const MintRippleBlocksBackground: React.FC<
         }}
       />
       {BLOCKS.map((block) => {
-        const rect = mixRect(block.portrait, block.wide, aspectMix);
+        const portraitRect = isStory
+          ? mixRect(block.story, block.portrait, 1 - storyMix)
+          : block.portrait;
+        const rect = mixRect(portraitRect, block.wide, portraitMix);
         const fadeProgress = interpolate(
           frame,
           [block.startFrame, block.startFrame + block.durationInFrames],
@@ -383,10 +405,10 @@ export const MintRippleBlocksBackground: React.FC<
       <div
         style={{
           position: "absolute",
-          left: width * 0.24,
-          top: height * 0.12,
-          width: width * 0.52,
-          height: height * 0.7,
+          left: isStory ? width * 0.15 : width * 0.24,
+          top: isStory ? height * 0.1 : height * 0.12,
+          width: isStory ? width * 0.7 : width * 0.52,
+          height: isStory ? height * 0.78 : height * 0.7,
           border: `${Math.max(1, vmin * 0.06)}px solid ${themeTokens.innerFrameStroke}`,
           opacity: innerFrameOpacity,
           boxSizing: "border-box",
@@ -396,10 +418,10 @@ export const MintRippleBlocksBackground: React.FC<
       <div
         style={{
           position: "absolute",
-          left: width * 0.22,
-          top: height * 0.18,
-          width: width * 0.56,
-          height: height * 0.52,
+          left: isStory ? width * 0.16 : width * 0.22,
+          top: isStory ? height * 0.2 : height * 0.18,
+          width: isStory ? width * 0.68 : width * 0.56,
+          height: isStory ? height * 0.46 : height * 0.52,
           background: themeTokens.innerShade,
           opacity: 0.8,
           pointerEvents: "none",
@@ -438,10 +460,10 @@ export const MintRippleBlocksBackground: React.FC<
       <div
         style={{
           position: "absolute",
-          left: width * 0.3,
-          top: height * 0.22,
-          width: width * 0.4,
-          height: height * 0.36,
+          left: isStory ? width * 0.24 : width * 0.3,
+          top: isStory ? height * 0.24 : height * 0.22,
+          width: isStory ? width * 0.52 : width * 0.4,
+          height: isStory ? height * 0.3 : height * 0.36,
           background: themeTokens.safeAreaWash,
           pointerEvents: "none",
         }}
@@ -449,10 +471,10 @@ export const MintRippleBlocksBackground: React.FC<
       <div
         style={{
           position: "absolute",
-          left: width * 0.08,
-          top: height * 0.06,
-          width: width * 0.84,
-          height: height * 0.88,
+          left: isStory ? width * 0.06 : width * 0.08,
+          top: isStory ? height * 0.04 : height * 0.06,
+          width: isStory ? width * 0.88 : width * 0.84,
+          height: isStory ? height * 0.92 : height * 0.88,
           boxSizing: "border-box",
           border: `${Math.max(1, vmin * 0.04)}px solid ${themeTokens.outerFrameStroke}`,
           pointerEvents: "none",
