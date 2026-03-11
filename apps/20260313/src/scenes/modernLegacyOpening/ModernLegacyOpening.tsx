@@ -10,6 +10,8 @@ import {
 } from "remotion";
 import type { CalculateMetadataFunction } from "remotion";
 import { z } from "zod";
+import { AuctionThemeBackground } from "../../designSystem/AuctionThemeBackground";
+import { useAuctionTypographyReady } from "../../designSystem/useAuctionTypographyReady";
 import { modernLegacyTokens } from "./variantTokens.modernLegacy";
 import { LegacyTitleBlock } from "./components/LegacyTitleBlock";
 import { resolveTokens } from "./tokens";
@@ -75,6 +77,8 @@ export const ModernLegacyOpening: React.FC<ModernLegacyOpeningProps> = ({
   backgroundImageSrc,
   alignment,
 }) => {
+  useAuctionTypographyReady();
+
   const frame = useCurrentFrame();
   const { fps, height, width } = useVideoConfig();
   const tokens = resolveTokens(modernLegacyTokens, { width, height });
@@ -123,23 +127,15 @@ export const ModernLegacyOpening: React.FC<ModernLegacyOpeningProps> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: tokens.palette.canvas,
         overflow: "hidden",
       }}
     >
-      <AbsoluteFill
-        style={{
-          background: [
-            `radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.14) 28%, rgba(255, 255, 255, 0) 58%)`,
-            `radial-gradient(ellipse 90% 76% at 50% 100%, ${tokens.palette.deepGreenWash} 0%, rgba(32, 50, 41, 0) 72%)`,
-            `linear-gradient(180deg, ${tokens.palette.ivory} 0%, ${tokens.palette.canvas} 52%, ${tokens.palette.canvasShade} 100%)`,
-          ].join(", "),
-        }}
-      />
+      <AuctionThemeBackground program="modernLegacy" />
       {showBackgroundImage ? (
         <AbsoluteFill
           style={{
-            opacity: tokens.imageTreatment.opacity,
+            mixBlendMode: "screen",
+            opacity: tokens.imageTreatment.opacity * 0.34,
           }}
         >
           <Img
@@ -157,10 +153,10 @@ export const ModernLegacyOpening: React.FC<ModernLegacyOpeningProps> = ({
       <AbsoluteFill
         style={{
           background: [
-            `linear-gradient(180deg, rgba(247, 243, 234, ${tokens.imageTreatment.washOpacity}) 0%, rgba(247, 243, 234, 0.14) 42%, rgba(247, 243, 234, 0.52) 100%)`,
-            `radial-gradient(ellipse 110% 82% at 50% 50%, rgba(255, 255, 255, 0) 56%, rgba(32, 50, 41, ${tokens.imageTreatment.vignetteOpacity}) 100%)`,
+            `linear-gradient(180deg, rgba(247, 243, 234, 0.18) 0%, rgba(247, 243, 234, 0.08) 42%, rgba(247, 243, 234, 0.26) 100%)`,
+            `radial-gradient(ellipse 110% 82% at 50% 50%, rgba(255, 255, 255, 0) 56%, rgba(32, 50, 41, 0.2) 100%)`,
           ].join(", "),
-          opacity: backgroundOpacity,
+          opacity: backgroundOpacity * 0.9,
         }}
       />
       <AbsoluteFill

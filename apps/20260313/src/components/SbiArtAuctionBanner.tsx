@@ -1,5 +1,4 @@
 import React from "react";
-import { loadFont as loadCormorant } from "@remotion/google-fonts/CormorantGaramond";
 import {
   Easing,
   interpolate,
@@ -7,11 +6,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-
-const { fontFamily: cormorantNormal } = loadCormorant("normal", {
-  weights: ["500", "600", "700"],
-  subsets: ["latin"],
-});
+import { auctionEnglishFontFamily } from "../designSystem/auctionThemeTokens";
+import { useAuctionTypographyReady } from "../designSystem/useAuctionTypographyReady";
 
 export type SbiArtAuctionBannerProps = {
   alignSelf?: React.CSSProperties["alignSelf"];
@@ -42,6 +38,8 @@ export const SbiArtAuctionBanner: React.FC<SbiArtAuctionBannerProps> = ({
   scale = 1,
   textColor = "#ffffff",
 }) => {
+  useAuctionTypographyReady();
+
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -127,9 +125,9 @@ export const SbiArtAuctionBanner: React.FC<SbiArtAuctionBannerProps> = ({
         <div
           style={{
             color: textColor,
-            fontFamily: cormorantNormal,
+            fontFamily: auctionEnglishFontFamily,
             fontSize,
-            fontWeight: 600,
+            fontWeight: 400,
             letterSpacing,
             lineHeight: 1.2,
             position: "relative",

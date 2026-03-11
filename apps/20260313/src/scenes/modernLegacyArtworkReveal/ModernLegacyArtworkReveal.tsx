@@ -7,6 +7,8 @@ import {
   useVideoConfig,
 } from "remotion";
 import { z } from "zod";
+import { AuctionThemeBackground } from "../../designSystem/AuctionThemeBackground";
+import { useAuctionTypographyReady } from "../../designSystem/useAuctionTypographyReady";
 import { modernLegacyTokens } from "../modernLegacyOpening/variantTokens.modernLegacy";
 import { resolveTokens } from "../modernLegacyOpening/tokens";
 import { getModernLegacyArtworkRecord } from "./data";
@@ -146,6 +148,8 @@ export const ModernLegacyArtworkReveal: React.FC<
   layoutVariant,
   archiveLabel,
 }) => {
+  useAuctionTypographyReady();
+
   const frame = useCurrentFrame();
   const { height, width } = useVideoConfig();
   const tokens = resolveTokens(modernLegacyTokens, { width, height });
@@ -170,10 +174,10 @@ export const ModernLegacyArtworkReveal: React.FC<
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: tokens.palette.canvas,
         overflow: "hidden",
       }}
     >
+      <AuctionThemeBackground program="modernLegacy" />
       <BackgroundWash
         width={width}
         height={height}

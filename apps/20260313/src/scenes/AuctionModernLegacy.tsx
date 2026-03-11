@@ -6,60 +6,23 @@ import {
   interpolate,
   spring,
 } from "remotion";
-import { loadFont as loadCormorant } from "@remotion/google-fonts/CormorantGaramond";
 import { SbiArtAuctionBanner } from "../components/SbiArtAuctionBanner";
-
-// ─── Fonts ──────────────────────────────────────────────────────────
-const { fontFamily: cormorantNormal } = loadCormorant("normal", {
-  weights: ["300", "400", "500", "600", "700"],
-  subsets: ["latin"],
-});
-
-const { fontFamily: cormorantItalic } = loadCormorant("italic", {
-  weights: ["300", "400"],
-  subsets: ["latin"],
-});
+import { AuctionThemeBackground } from "../designSystem/AuctionThemeBackground";
+import {
+  auctionEnglishFontFamily,
+  auctionProgramThemes,
+} from "../designSystem/auctionThemeTokens";
+import { useAuctionTypographyReady } from "../designSystem/useAuctionTypographyReady";
 
 // ─── Design Tokens (matched to SBI Art Auction catalog image — left half) ──
+const modernLegacyTheme = auctionProgramThemes.modernLegacy;
 const COLORS = {
-  /** Deep teal background */
-  bg: "#0b4d40",
-  bgDark: "#083a30",
-  bgLight: "#0e5e4e",
   /** Gold banner / accent */
-  gold: "#b8a466",
-  goldLight: "#d4c68a",
-  goldDark: "#8a7a3e",
+  gold: modernLegacyTheme.accentGold,
   /** Text colors */
-  white: "#ffffff",
-  cream: "#f0ece3",
-  subtextLight: "rgba(255,255,255,0.75)",
-};
-
-// ─── Background ─────────────────────────────────────────────────────
-const TealBackground: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  const bgOpacity = interpolate(frame, [0, 1 * fps], [0, 1], {
-    extrapolateRight: "clamp",
-  });
-
-  return (
-    <AbsoluteFill
-      style={{
-        opacity: bgOpacity,
-        background: `linear-gradient(
-          160deg,
-          ${COLORS.bgDark} 0%,
-          ${COLORS.bg} 30%,
-          ${COLORS.bgLight} 55%,
-          ${COLORS.bg} 80%,
-          ${COLORS.bgDark} 100%
-        )`,
-      }}
-    />
-  );
+  white: modernLegacyTheme.displayText,
+  cream: modernLegacyTheme.canvasIvory,
+  subtextLight: modernLegacyTheme.metaText,
 };
 
 // ─── Vignette ───────────────────────────────────────────────────────
@@ -67,7 +30,7 @@ const Vignette: React.FC = () => (
   <AbsoluteFill
     style={{
       background:
-        "radial-gradient(ellipse 85% 75% at 50% 50%, transparent 35%, rgba(6, 30, 24, 0.55) 100%)",
+        "radial-gradient(ellipse 85% 75% at 50% 50%, transparent 35%, rgba(6, 30, 24, 0.42) 100%)",
       pointerEvents: "none",
     }}
   />
@@ -112,10 +75,20 @@ const TextLine: React.FC<TextLineProps> = ({ text, delayInSeconds, style }) => {
 
 // ─── Main Scene ─────────────────────────────────────────────────────
 export const AuctionModernLegacy: React.FC = () => {
+  useAuctionTypographyReady();
+
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const backgroundOpacity = interpolate(frame, [0, fps], [0, 1], {
+    extrapolateRight: "clamp",
+  });
+
   return (
     <AbsoluteFill>
-      {/* Deep teal gradient background */}
-      <TealBackground />
+      <AuctionThemeBackground
+        opacity={backgroundOpacity}
+        program="modernLegacy"
+      />
 
       {/* Vignette overlay */}
       <Vignette />
@@ -143,10 +116,10 @@ export const AuctionModernLegacy: React.FC = () => {
           text="Modern Legacy"
           delayInSeconds={1.8}
           style={{
-            fontFamily: cormorantNormal,
+            fontFamily: auctionEnglishFontFamily,
             fontSize: 100,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
+            fontWeight: 400,
+            letterSpacing: "0.06em",
             color: COLORS.white,
             lineHeight: 1.15,
             textTransform: "uppercase" as const,
@@ -161,11 +134,10 @@ export const AuctionModernLegacy: React.FC = () => {
           text="An Important Japanese Collection of 20th & 21st Century Masters"
           delayInSeconds={2.5}
           style={{
-            fontFamily: cormorantItalic,
+            fontFamily: auctionEnglishFontFamily,
             fontSize: 26,
             fontWeight: 400,
-            fontStyle: "italic",
-            letterSpacing: "0.06em",
+            letterSpacing: "0.08em",
             color: COLORS.subtextLight,
             lineHeight: 1.5,
             maxWidth: "85%",

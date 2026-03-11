@@ -56,11 +56,11 @@ export const BackgroundWash: React.FC<BackgroundWashProps> = ({
       <AbsoluteFill
         style={{
           background: [
-            `radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.12) 26%, rgba(255, 255, 255, 0) 54%)`,
-            `radial-gradient(ellipse 95% 75% at 50% 100%, ${tokens.palette.deepGreenWash} 0%, rgba(32, 50, 41, 0) 70%)`,
-            `linear-gradient(180deg, ${tokens.palette.ivory} 0%, ${tokens.palette.canvas} 48%, ${tokens.palette.canvasShade} 100%)`,
+            `radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 26%, rgba(255, 255, 255, 0) 54%)`,
+            `radial-gradient(ellipse 95% 75% at 50% 100%, rgba(32, 50, 41, 0.16) 0%, rgba(32, 50, 41, 0) 70%)`,
+            `linear-gradient(180deg, rgba(247, 243, 234, 0.12) 0%, rgba(247, 243, 234, 0.05) 48%, rgba(221, 214, 202, 0.18) 100%)`,
           ].join(", "),
-          opacity: 0.88 + progress * 0.12,
+          opacity: 0.32 + progress * 0.14,
         }}
       />
       <div

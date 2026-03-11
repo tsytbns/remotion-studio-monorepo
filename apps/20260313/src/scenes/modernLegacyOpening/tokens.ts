@@ -1,9 +1,4 @@
-import { loadFont as loadCormorant } from "@remotion/google-fonts/CormorantGaramond";
-
-const { fontFamily: cormorantSerif } = loadCormorant("normal", {
-  weights: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-});
+import { auctionEnglishFontFamily } from "../../designSystem/auctionThemeTokens";
 
 export type RelativeUnit = {
   basis: "width" | "height" | "min";
@@ -131,6 +126,31 @@ export type BaseTokens = {
     washOpacity: number;
     vignetteOpacity: number;
   };
+  infoBoard: {
+    panelWidth: RelativeUnit;
+    panelMinHeight: RelativeUnit;
+    panelPaddingX: RelativeUnit;
+    panelPaddingY: RelativeUnit;
+    panelBiasInset: RelativeUnit;
+    panelShiftY: RelativeUnit;
+    maxPrimaryWidth: RelativeUnit;
+    secondaryColumnWidth: RelativeUnit;
+    columnGap: RelativeUnit;
+    blockGap: RelativeUnit;
+    lineGap: RelativeUnit;
+    secondaryLineGap: RelativeUnit;
+    titleFontSize: RelativeUnit;
+    titleMinFontSize: RelativeUnit;
+    modeFontSize: RelativeUnit;
+    bodyFontSize: RelativeUnit;
+    venueFontSize: RelativeUnit;
+    noteFontSize: RelativeUnit;
+    softFieldWidth: RelativeUnit;
+    softFieldHeight: RelativeUnit;
+    fieldShiftY: RelativeUnit;
+    lineDrawWidth: RelativeUnit;
+    secondaryRuleWidth: RelativeUnit;
+  };
 };
 
 export type ResolvedTokens = ResolveTokenValue<BaseTokens>;
@@ -256,19 +276,19 @@ export const baseTokens: BaseTokens = {
   },
   typography: {
     fonts: {
-      serif: cormorantSerif,
-      meta: cormorantSerif,
+      serif: auctionEnglishFontFamily,
+      meta: auctionEnglishFontFamily,
     },
     eyebrow: {
       fontSize: rel("min", 0.016),
       letterSpacing: "0.28em",
-      fontWeight: 600,
+      fontWeight: 400,
       textTransform: "uppercase",
     },
     title: {
       fontSize: rel("min", 0.118),
       minFontSize: rel("min", 0.1),
-      fontWeight: 600,
+      fontWeight: 400,
       letterSpacing: "0.08em",
       lineHeight: 0.92,
       textTransform: "uppercase",
@@ -276,7 +296,7 @@ export const baseTokens: BaseTokens = {
     subtitle: {
       fontSize: rel("min", 0.028),
       minFontSize: rel("min", 0.023),
-      fontWeight: 500,
+      fontWeight: 400,
       letterSpacing: "0.035em",
       lineHeight: 1.28,
       maxWidth: rel("width", 0.5),
@@ -284,7 +304,7 @@ export const baseTokens: BaseTokens = {
     meta: {
       fontSize: rel("min", 0.014),
       letterSpacing: "0.24em",
-      fontWeight: 500,
+      fontWeight: 400,
       textTransform: "uppercase",
     },
   },
@@ -317,5 +337,30 @@ export const baseTokens: BaseTokens = {
     brightness: 0.96,
     washOpacity: 0.46,
     vignetteOpacity: 0.18,
+  },
+  infoBoard: {
+    panelWidth: rel("width", 0.78),
+    panelMinHeight: rel("height", 0.33),
+    panelPaddingX: rel("width", 0.058),
+    panelPaddingY: rel("min", 0.058),
+    panelBiasInset: rel("width", 0.024),
+    panelShiftY: rel("min", 0.034),
+    maxPrimaryWidth: rel("width", 0.46),
+    secondaryColumnWidth: rel("width", 0.24),
+    columnGap: rel("width", 0.042),
+    blockGap: rel("min", 0.03),
+    lineGap: rel("min", 0.0135),
+    secondaryLineGap: rel("min", 0.0105),
+    titleFontSize: rel("min", 0.082),
+    titleMinFontSize: rel("min", 0.066),
+    modeFontSize: rel("min", 0.0155),
+    bodyFontSize: rel("min", 0.0228),
+    venueFontSize: rel("min", 0.0182),
+    noteFontSize: rel("min", 0.0164),
+    softFieldWidth: rel("width", 0.74),
+    softFieldHeight: rel("height", 0.28),
+    fieldShiftY: rel("min", 0.014),
+    lineDrawWidth: rel("width", 0.42),
+    secondaryRuleWidth: rel("width", 0.24),
   },
 };

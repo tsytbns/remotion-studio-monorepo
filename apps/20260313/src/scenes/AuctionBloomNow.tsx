@@ -6,39 +6,19 @@ import {
   interpolate,
   spring,
 } from "remotion";
-import { loadFont as loadCormorant } from "@remotion/google-fonts/CormorantGaramond";
 import { SbiArtAuctionBanner } from "../components/SbiArtAuctionBanner";
+import { AuctionThemeBackground } from "../designSystem/AuctionThemeBackground";
+import {
+  auctionEnglishFontFamily,
+  auctionProgramThemes,
+} from "../designSystem/auctionThemeTokens";
+import { useAuctionTypographyReady } from "../designSystem/useAuctionTypographyReady";
 
-const { fontFamily: cormorantNormal } = loadCormorant("normal", {
-  weights: ["300", "400", "500", "600", "700"],
-  subsets: ["latin"],
-});
-
+const bloomNowTheme = auctionProgramThemes.bloomNow;
 const COLORS = {
-  bg0: "#ede7d8",
-  bg1: "#f0ebe0",
-  bg2: "#ede3d5",
-  gold: "#b8a466",
+  gold: bloomNowTheme.accentGold,
   white: "#ffffff",
-  title: "#2a2520",
-};
-
-const CreamBackground: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  const bgOpacity = interpolate(frame, [0, 1 * fps], [0, 1], {
-    extrapolateRight: "clamp",
-  });
-
-  return (
-    <AbsoluteFill
-      style={{
-        opacity: bgOpacity,
-        background: `linear-gradient(160deg, ${COLORS.bg0} 0%, ${COLORS.bg1} 30%, ${COLORS.bg2} 55%, ${COLORS.bg1} 80%, ${COLORS.bg0} 100%)`,
-      }}
-    />
-  );
+  title: bloomNowTheme.titleInk,
 };
 
 const Vignette: React.FC = () => (
@@ -71,10 +51,10 @@ const Title: React.FC = () => {
       style={{
         opacity,
         transform: `translateY(${translateY}px)`,
-        fontFamily: cormorantNormal,
+        fontFamily: auctionEnglishFontFamily,
         fontSize: 100,
-        fontWeight: 700,
-        letterSpacing: "0.04em",
+        fontWeight: 400,
+        letterSpacing: "0.06em",
         color: COLORS.title,
         lineHeight: 1.15,
         textTransform: "uppercase" as const,
@@ -86,9 +66,17 @@ const Title: React.FC = () => {
 };
 
 export const AuctionBloomNow: React.FC = () => {
+  useAuctionTypographyReady();
+
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const backgroundOpacity = interpolate(frame, [0, fps], [0, 1], {
+    extrapolateRight: "clamp",
+  });
+
   return (
     <AbsoluteFill>
-      <CreamBackground />
+      <AuctionThemeBackground opacity={backgroundOpacity} program="bloomNow" />
       <Vignette />
       <AbsoluteFill
         style={{

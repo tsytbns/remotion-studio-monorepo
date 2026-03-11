@@ -1,73 +1,46 @@
 import React from "react";
-import {
-  AbsoluteFill,
-  Composition,
-  Folder,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
-import { z } from "zod";
-import { LinkedParticles } from "./scenes/LinkedParticles";
-import { AuctionModernLegacy } from "./scenes/AuctionModernLegacy";
+import { Composition, Folder } from "remotion";
 import { AuctionBloomNow } from "./scenes/AuctionBloomNow";
+import { AuctionModernLegacy } from "./scenes/AuctionModernLegacy";
 import {
   ElegantMetalTitle,
   elegantMetalTitleDefaults,
   elegantMetalTitleSchema,
 } from "./scenes/ElegantMetalTitle";
 import {
-  SbiArtAuctionSplash,
-  sbiArtAuctionSplashDefaults,
-  sbiArtAuctionSplashSchema,
-} from "./scenes/SbiArtAuctionSplash";
-import {
   MintRippleBlocksBackground,
   mintRippleBlocksBackgroundDefaults,
   mintRippleBlocksBackgroundSchema,
 } from "./scenes/MintRippleBlocksBackground";
 import {
-  ModernLegacyOpening,
-  calculateModernLegacyOpeningMetadata,
-  modernLegacyOpeningDefaults,
-  modernLegacyOpeningSchema,
-} from "./scenes/modernLegacyOpening/ModernLegacyOpening";
+  SbiArtAuctionSplash,
+  sbiArtAuctionSplashDefaults,
+  sbiArtAuctionSplashSchema,
+} from "./scenes/SbiArtAuctionSplash";
 import {
   ModernLegacyArtworkReveal,
   modernLegacyArtworkRevealDefaults,
   modernLegacyArtworkRevealSchema,
 } from "./scenes/modernLegacyArtworkReveal/ModernLegacyArtworkReveal";
+import {
+  ModernLegacyInfoBoard,
+  modernLegacyInfoBoardDefaults,
+  modernLegacyInfoBoardSchema,
+  modernLegacyTalkEventBoardDefaults,
+} from "./scenes/modernLegacyInfoBoard/ModernLegacyInfoBoard";
+import {
+  calculateModernLegacyOpeningMetadata,
+  ModernLegacyOpening,
+  modernLegacyOpeningDefaults,
+  modernLegacyOpeningSchema,
+} from "./scenes/modernLegacyOpening/ModernLegacyOpening";
+import {
+  modernLegacyResolvePackFolders,
+  modernLegacyResolvePackItems,
+} from "./scenes/modernLegacyResolvePack/exportPack";
 
-// These placeholders are replaced by scripts/create-project.ts when generating a new project
-const WIDTH = 1350;
-const HEIGHT = 1080;
 const FPS = 30;
 const DURATION = 180;
-
-const templateMainSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  background: z.string(),
-  textColor: z.string(),
-});
-
-const linkedParticlesSchema = z.object({
-  seed: z.union([z.string(), z.number()]).optional(),
-  showGUI: z.boolean().optional(),
-});
-
-type TemplateMainProps = z.infer<typeof templateMainSchema>;
-type LinkedParticlesProps = z.infer<typeof linkedParticlesSchema>;
-
-const templateMainDefaults: TemplateMainProps = {
-  title: "New Remotion Project",
-  subtitle: "Frame/FPS preview",
-  background: "#0b0d12",
-  textColor: "#fff",
-};
-
-const linkedParticlesDefaults: LinkedParticlesProps = {
-  seed: "LinkedParticles",
-};
 
 const transparentProResDefaults = {
   defaultCodec: "prores" as const,
@@ -76,179 +49,221 @@ const transparentProResDefaults = {
   defaultVideoImageFormat: "png" as const,
 };
 
-const TemplateMain: React.FC<TemplateMainProps> = ({
-  title,
-  subtitle,
-  background,
-  textColor,
-}) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  return (
-    <AbsoluteFill
-      style={{
-        alignItems: "center",
-        justifyContent: "center",
-        background,
-        color: textColor,
-      }}
-    >
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 64, fontWeight: 800, marginBottom: 16 }}>
-          {title}
-        </div>
-        <div style={{ fontSize: 24, opacity: 0.8 }}>
-          {subtitle} / Frame: {frame} / FPS: {fps}
-        </div>
-      </div>
-    </AbsoluteFill>
-  );
-};
-
 export const Root: React.FC = () => {
   return (
     <>
+      <Folder name="Modern-Legacy">
+        <Folder name="Openings">
+          <Composition
+            id="ModernLegacyOpening"
+            component={ModernLegacyOpening}
+            width={1080}
+            height={1920}
+            fps={FPS}
+            durationInFrames={360}
+            schema={modernLegacyOpeningSchema}
+            defaultProps={modernLegacyOpeningDefaults}
+            calculateMetadata={calculateModernLegacyOpeningMetadata}
+          />
+          <Composition
+            id="ModernLegacyOpeningWide"
+            component={ModernLegacyOpening}
+            width={1920}
+            height={1080}
+            fps={FPS}
+            durationInFrames={360}
+            schema={modernLegacyOpeningSchema}
+            defaultProps={modernLegacyOpeningDefaults}
+            calculateMetadata={calculateModernLegacyOpeningMetadata}
+          />
+        </Folder>
+        <Folder name="Boards">
+          <Composition
+            id="ModernLegacyInfoBoard"
+            component={ModernLegacyInfoBoard}
+            width={1080}
+            height={1920}
+            fps={FPS}
+            durationInFrames={180}
+            schema={modernLegacyInfoBoardSchema}
+            defaultProps={modernLegacyInfoBoardDefaults}
+          />
+          <Composition
+            id="ModernLegacyTalkEventBoard"
+            component={ModernLegacyInfoBoard}
+            width={1080}
+            height={1920}
+            fps={FPS}
+            durationInFrames={300}
+            schema={modernLegacyInfoBoardSchema}
+            defaultProps={modernLegacyTalkEventBoardDefaults}
+          />
+        </Folder>
+        <Folder name="Artwork">
+          <Composition
+            id="ModernLegacyArtworkReveal"
+            component={ModernLegacyArtworkReveal}
+            width={1080}
+            height={1920}
+            fps={FPS}
+            durationInFrames={150}
+            schema={modernLegacyArtworkRevealSchema}
+            defaultProps={modernLegacyArtworkRevealDefaults}
+          />
+        </Folder>
+        <Folder name="Resolve-Pack">
+          {modernLegacyResolvePackFolders.map((folderName) => {
+            return (
+              <Folder key={folderName} name={folderName}>
+                {modernLegacyResolvePackItems
+                  .filter((item) => item.folder === folderName)
+                  .map((item) => {
+                    return (
+                      <Composition
+                        key={item.id}
+                        id={item.id}
+                        component={item.component}
+                        width={item.width}
+                        height={item.height}
+                        fps={item.fps}
+                        durationInFrames={item.durationInFrames}
+                        schema={item.schema}
+                        defaultProps={item.defaultProps}
+                        calculateMetadata={item.calculateMetadata}
+                      />
+                    );
+                  })}
+              </Folder>
+            );
+          })}
+        </Folder>
+      </Folder>
+
+      <Folder name="Title-Cards">
+        <Composition
+          id="ElegantMetalTitle"
+          component={ElegantMetalTitle}
+          width={1920}
+          height={1080}
+          fps={60}
+          durationInFrames={180}
+          schema={elegantMetalTitleSchema}
+          defaultProps={elegantMetalTitleDefaults}
+          calculateMetadata={async () => transparentProResDefaults}
+        />
+        <Composition
+          id="SbiArtAuctionSplash"
+          component={SbiArtAuctionSplash}
+          width={1920}
+          height={1080}
+          fps={60}
+          durationInFrames={180}
+          schema={sbiArtAuctionSplashSchema}
+          defaultProps={sbiArtAuctionSplashDefaults}
+          calculateMetadata={async () => transparentProResDefaults}
+        />
+      </Folder>
+
       <Folder name="Backgrounds">
-        <Composition
-          id="MintRippleBackground16x9"
-          component={MintRippleBlocksBackground}
-          width={1920}
-          height={1080}
-          fps={60}
-          durationInFrames={180}
-          schema={mintRippleBlocksBackgroundSchema}
-          defaultProps={{
-            ...mintRippleBlocksBackgroundDefaults,
-            aspectMode: "wide",
-            theme: "mint",
-          }}
-          calculateMetadata={async () => transparentProResDefaults}
-        />
-        <Composition
-          id="MintRippleBackground4x5"
-          component={MintRippleBlocksBackground}
-          width={1080}
-          height={1350}
-          fps={60}
-          durationInFrames={180}
-          schema={mintRippleBlocksBackgroundSchema}
-          defaultProps={{
-            ...mintRippleBlocksBackgroundDefaults,
-            aspectMode: "portrait",
-            theme: "mint",
-          }}
-          calculateMetadata={async () => transparentProResDefaults}
-        />
-        <Composition
-          id="ChampagneRippleBackground16x9"
-          component={MintRippleBlocksBackground}
-          width={1920}
-          height={1080}
-          fps={60}
-          durationInFrames={180}
-          schema={mintRippleBlocksBackgroundSchema}
-          defaultProps={{
-            ...mintRippleBlocksBackgroundDefaults,
-            aspectMode: "wide",
-            theme: "champagne",
-          }}
-          calculateMetadata={async () => transparentProResDefaults}
-        />
-        <Composition
-          id="ChampagneRippleBackground4x5"
-          component={MintRippleBlocksBackground}
-          width={1080}
-          height={1350}
-          fps={60}
-          durationInFrames={180}
-          schema={mintRippleBlocksBackgroundSchema}
-          defaultProps={{
-            ...mintRippleBlocksBackgroundDefaults,
-            aspectMode: "portrait",
-            theme: "champagne",
-          }}
-          calculateMetadata={async () => transparentProResDefaults}
-        />
+        <Folder name="Aspect-16x9">
+          <Composition
+            id="MintRippleBackground16x9"
+            component={MintRippleBlocksBackground}
+            width={1920}
+            height={1080}
+            fps={60}
+            durationInFrames={180}
+            schema={mintRippleBlocksBackgroundSchema}
+            defaultProps={{
+              ...mintRippleBlocksBackgroundDefaults,
+              aspectMode: "wide",
+              theme: "mint",
+            }}
+            calculateMetadata={async () => transparentProResDefaults}
+          />
+          <Composition
+            id="ChampagneRippleBackground16x9"
+            component={MintRippleBlocksBackground}
+            width={1920}
+            height={1080}
+            fps={60}
+            durationInFrames={180}
+            schema={mintRippleBlocksBackgroundSchema}
+            defaultProps={{
+              ...mintRippleBlocksBackgroundDefaults,
+              aspectMode: "wide",
+              theme: "champagne",
+            }}
+            calculateMetadata={async () => transparentProResDefaults}
+          />
+        </Folder>
+        <Folder name="Aspect-4x5">
+          <Composition
+            id="MintRippleBackground4x5"
+            component={MintRippleBlocksBackground}
+            width={1080}
+            height={1350}
+            fps={60}
+            durationInFrames={180}
+            schema={mintRippleBlocksBackgroundSchema}
+            defaultProps={{
+              ...mintRippleBlocksBackgroundDefaults,
+              aspectMode: "portrait",
+              theme: "mint",
+            }}
+            calculateMetadata={async () => transparentProResDefaults}
+          />
+          <Composition
+            id="ChampagneRippleBackground4x5"
+            component={MintRippleBlocksBackground}
+            width={1080}
+            height={1350}
+            fps={60}
+            durationInFrames={180}
+            schema={mintRippleBlocksBackgroundSchema}
+            defaultProps={{
+              ...mintRippleBlocksBackgroundDefaults,
+              aspectMode: "portrait",
+              theme: "champagne",
+            }}
+            calculateMetadata={async () => transparentProResDefaults}
+          />
+        </Folder>
+        <Folder name="Aspect-9x16">
+          <Composition
+            id="MintRippleBackground9x16"
+            component={MintRippleBlocksBackground}
+            width={1080}
+            height={1920}
+            fps={60}
+            durationInFrames={180}
+            schema={mintRippleBlocksBackgroundSchema}
+            defaultProps={{
+              ...mintRippleBlocksBackgroundDefaults,
+              aspectMode: "story",
+              theme: "mint",
+            }}
+            calculateMetadata={async () => transparentProResDefaults}
+          />
+          <Composition
+            id="ChampagneRippleBackground9x16"
+            component={MintRippleBlocksBackground}
+            width={1080}
+            height={1920}
+            fps={60}
+            durationInFrames={180}
+            schema={mintRippleBlocksBackgroundSchema}
+            defaultProps={{
+              ...mintRippleBlocksBackgroundDefaults,
+              aspectMode: "story",
+              theme: "champagne",
+            }}
+            calculateMetadata={async () => transparentProResDefaults}
+          />
+        </Folder>
       </Folder>
-      <Composition
-        id="ElegantMetalTitle"
-        component={ElegantMetalTitle}
-        width={1920}
-        height={1080}
-        fps={60}
-        durationInFrames={180}
-        schema={elegantMetalTitleSchema}
-        defaultProps={elegantMetalTitleDefaults}
-        calculateMetadata={async () => transparentProResDefaults}
-      />
-      <Composition
-        id="SbiArtAuctionSplash"
-        component={SbiArtAuctionSplash}
-        width={1920}
-        height={1080}
-        fps={60}
-        durationInFrames={180}
-        schema={sbiArtAuctionSplashSchema}
-        defaultProps={sbiArtAuctionSplashDefaults}
-        calculateMetadata={async () => transparentProResDefaults}
-      />
-      <Composition
-        id="Main"
-        component={TemplateMain}
-        width={WIDTH}
-        height={HEIGHT}
-        fps={FPS}
-        durationInFrames={DURATION}
-        schema={templateMainSchema}
-        defaultProps={templateMainDefaults}
-      />
-      <Composition
-        id="LinkedParticles"
-        component={LinkedParticles}
-        width={WIDTH}
-        height={HEIGHT}
-        fps={FPS}
-        durationInFrames={DURATION}
-        schema={linkedParticlesSchema}
-        defaultProps={linkedParticlesDefaults}
-      />
-      <Folder name="Auction-Openings">
-        <Composition
-          id="ModernLegacyOpening"
-          component={ModernLegacyOpening}
-          width={1080}
-          height={1920}
-          fps={FPS}
-          durationInFrames={360}
-          schema={modernLegacyOpeningSchema}
-          defaultProps={modernLegacyOpeningDefaults}
-          calculateMetadata={calculateModernLegacyOpeningMetadata}
-        />
-        <Composition
-          id="ModernLegacyOpeningWide"
-          component={ModernLegacyOpening}
-          width={1920}
-          height={1080}
-          fps={FPS}
-          durationInFrames={360}
-          schema={modernLegacyOpeningSchema}
-          defaultProps={modernLegacyOpeningDefaults}
-          calculateMetadata={calculateModernLegacyOpeningMetadata}
-        />
-      </Folder>
-      <Folder name="Auction-Templates">
-        <Composition
-          id="ModernLegacyArtworkReveal"
-          component={ModernLegacyArtworkReveal}
-          width={1080}
-          height={1920}
-          fps={FPS}
-          durationInFrames={150}
-          schema={modernLegacyArtworkRevealSchema}
-          defaultProps={modernLegacyArtworkRevealDefaults}
-        />
-      </Folder>
-      <Folder name="Auction-Studies">
+
+      <Folder name="Studies">
         <Composition
           id="AuctionModernLegacy"
           component={AuctionModernLegacy}
@@ -266,40 +281,6 @@ export const Root: React.FC = () => {
           durationInFrames={DURATION}
         />
       </Folder>
-      <Folder name="Backgrounds-Vertical">
-        <Composition
-          id="MintRippleBackground9x16"
-          component={MintRippleBlocksBackground}
-          width={1080}
-          height={1920}
-          fps={60}
-          durationInFrames={180}
-          schema={mintRippleBlocksBackgroundSchema}
-          defaultProps={{
-            ...mintRippleBlocksBackgroundDefaults,
-            aspectMode: "story",
-            theme: "mint",
-          }}
-          calculateMetadata={async () => transparentProResDefaults}
-        />
-        <Composition
-          id="ChampagneRippleBackground9x16"
-          component={MintRippleBlocksBackground}
-          width={1080}
-          height={1920}
-          fps={60}
-          durationInFrames={180}
-          schema={mintRippleBlocksBackgroundSchema}
-          defaultProps={{
-            ...mintRippleBlocksBackgroundDefaults,
-            aspectMode: "story",
-            theme: "champagne",
-          }}
-          calculateMetadata={async () => transparentProResDefaults}
-        />
-      </Folder>
     </>
   );
 };
-
-export { TemplateMain };
