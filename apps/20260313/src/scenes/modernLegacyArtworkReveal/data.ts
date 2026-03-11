@@ -1,4 +1,5 @@
 import { staticFile } from "remotion";
+import { normalizeAuctionLotNo } from "../../designSystem/auctionThemeTokens";
 import captionData from "../../../resources /Caption.json";
 
 type CaptionRecord = (typeof captionData)[number];
@@ -15,10 +16,6 @@ export type ModernLegacyArtworkRecord = {
 };
 
 const yenFormatter = new Intl.NumberFormat("en-US");
-
-const normalizeLotNo = (lotNo: string) => {
-  return lotNo.padStart(3, "0");
-};
 
 const truncate = (value: string, maxLength: number) => {
   if (value.length <= maxLength) {
@@ -67,7 +64,7 @@ const pickArchiveLabel = (entry: CaptionRecord) => {
 
 export const modernLegacyArtworkRecords: ModernLegacyArtworkRecord[] =
   captionData.map((entry) => {
-    const lotNo = normalizeLotNo(entry.lot_no);
+    const lotNo = normalizeAuctionLotNo(entry.lot_no);
 
     return {
       archiveLabel: pickArchiveLabel(entry),
@@ -88,7 +85,7 @@ export const getModernLegacyArtworkRecord = (lotNo?: string) => {
 
   return (
     modernLegacyArtworkRecords.find(
-      (record) => record.lotNo === normalizeLotNo(lotNo),
+      (record) => record.lotNo === normalizeAuctionLotNo(lotNo),
     ) ?? modernLegacyArtworkRecords[0]
   );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { Img } from "remotion";
-import type { ResolvedTokens } from "../../modernLegacyOpening/tokens";
 import type {
   FrameRect,
   ModernLegacyArtworkPosition,
@@ -11,7 +10,6 @@ export type ArtworkStageProps = {
   imageSrc: string;
   progress: number;
   rect: FrameRect;
-  tokens: ResolvedTokens;
 };
 
 const objectXMap: Record<ModernLegacyArtworkPosition["x"], string> = {
@@ -31,7 +29,6 @@ export const ArtworkStage: React.FC<ArtworkStageProps> = ({
   imageSrc,
   progress,
   rect,
-  tokens,
 }) => {
   const matteInset = Math.min(rect.width, rect.height) * 0.045;
   const scale = (artworkPosition.scale ?? 1) * (1.01 - progress * 0.01);
@@ -62,22 +59,6 @@ export const ArtworkStage: React.FC<ArtworkStageProps> = ({
           opacity: 0.16 + progress * 0.84,
           transform: `scale(${scale})`,
           width: "100%",
-        }}
-      />
-      <div
-        style={{
-          border: `${tokens.layout.hairline}px solid rgba(255, 255, 255, 0.4)`,
-          inset: 0,
-          pointerEvents: "none",
-          position: "absolute",
-        }}
-      />
-      <div
-        style={{
-          boxShadow: "inset 0 0 0 1px rgba(32, 50, 41, 0.06)",
-          inset: 0,
-          pointerEvents: "none",
-          position: "absolute",
         }}
       />
     </div>

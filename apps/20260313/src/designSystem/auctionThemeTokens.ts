@@ -73,3 +73,30 @@ export const getAuctionBackgroundAspectMode = (
 
   return "wide";
 };
+
+export const normalizeAuctionLotNo = (lotNo: string | number) => {
+  return String(lotNo).trim().padStart(3, "0");
+};
+
+export const MODERN_LEGACY_LAST_LOT = 81;
+export const BLOOM_NOW_FIRST_LOT = 101;
+
+export const getAuctionProgramFromLotNo = (
+  lotNo: string | number,
+): AuctionProgramThemeName => {
+  const parsed = Number.parseInt(String(lotNo).trim(), 10);
+
+  if (
+    Number.isFinite(parsed) &&
+    parsed >= 1 &&
+    parsed <= MODERN_LEGACY_LAST_LOT
+  ) {
+    return "modernLegacy";
+  }
+
+  if (Number.isFinite(parsed) && parsed >= BLOOM_NOW_FIRST_LOT) {
+    return "bloomNow";
+  }
+
+  return "modernLegacy";
+};

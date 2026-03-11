@@ -1,11 +1,16 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
+import {
+  auctionProgramThemes,
+  type AuctionProgramThemeName,
+} from "../../../designSystem/auctionThemeTokens";
 import type { ModernLegacyArtworkLayoutVariant } from "../ModernLegacyArtworkReveal";
 import type { ResolvedTokens } from "../../modernLegacyOpening/tokens";
 
 export type BackgroundWashProps = {
   height: number;
   layoutVariant: ModernLegacyArtworkLayoutVariant;
+  program: AuctionProgramThemeName;
   progress: number;
   tokens: ResolvedTokens;
   width: number;
@@ -45,11 +50,13 @@ const getFieldRect = (
 export const BackgroundWash: React.FC<BackgroundWashProps> = ({
   height,
   layoutVariant,
+  program,
   progress,
   tokens,
   width,
 }) => {
   const fieldRect = getFieldRect(layoutVariant, width, height);
+  const theme = auctionProgramThemes[program];
 
   return (
     <>
@@ -57,7 +64,7 @@ export const BackgroundWash: React.FC<BackgroundWashProps> = ({
         style={{
           background: [
             `radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 26%, rgba(255, 255, 255, 0) 54%)`,
-            `radial-gradient(ellipse 95% 75% at 50% 100%, rgba(32, 50, 41, 0.16) 0%, rgba(32, 50, 41, 0) 70%)`,
+            `radial-gradient(ellipse 95% 75% at 50% 100%, ${theme.deepToneWash} 0%, rgba(32, 50, 41, 0) 70%)`,
             `linear-gradient(180deg, rgba(247, 243, 234, 0.12) 0%, rgba(247, 243, 234, 0.05) 48%, rgba(221, 214, 202, 0.18) 100%)`,
           ].join(", "),
           opacity: 0.32 + progress * 0.14,

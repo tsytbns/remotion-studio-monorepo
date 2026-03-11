@@ -7,6 +7,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { z } from "zod";
+import { getAuctionProgramFromLotNo } from "../../designSystem/auctionThemeTokens";
 import { AuctionThemeBackground } from "../../designSystem/AuctionThemeBackground";
 import { useAuctionTypographyReady } from "../../designSystem/useAuctionTypographyReady";
 import { modernLegacyTokens } from "../modernLegacyOpening/variantTokens.modernLegacy";
@@ -65,7 +66,7 @@ export const modernLegacyArtworkRevealDefaults: ModernLegacyArtworkRevealProps =
     medium: defaultRecord.medium,
     lotNo: defaultRecord.lotNo,
     estimate: defaultRecord.estimate,
-    archiveLabel: defaultRecord.archiveLabel,
+    archiveLabel: null,
     artworkPosition: {
       fit: "contain",
       x: "center",
@@ -168,6 +169,7 @@ export const ModernLegacyArtworkReveal: React.FC<
     extrapolateRight: "clamp",
   });
   const { plateRect, stageRect } = getLayout(layoutVariant, width, height);
+  const auctionProgram = getAuctionProgramFromLotNo(lotNo);
   const frameOpacity = 0.42 + backgroundProgress * 0.58;
   const plateTranslateY = (1 - plateProgress) * Math.min(width, height) * 0.02;
 
@@ -177,11 +179,12 @@ export const ModernLegacyArtworkReveal: React.FC<
         overflow: "hidden",
       }}
     >
-      <AuctionThemeBackground program="modernLegacy" />
+      <AuctionThemeBackground program={auctionProgram} />
       <BackgroundWash
         width={width}
         height={height}
         layoutVariant={layoutVariant}
+        program={auctionProgram}
         progress={backgroundProgress}
         tokens={tokens}
       />
@@ -191,7 +194,6 @@ export const ModernLegacyArtworkReveal: React.FC<
           imageSrc={imageSrc}
           progress={artworkProgress}
           rect={stageRect}
-          tokens={tokens}
         />
       </CollectionFrame>
       <ArchiveInfoPlate
