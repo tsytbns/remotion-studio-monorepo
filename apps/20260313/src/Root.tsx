@@ -23,6 +23,12 @@ import {
   modernLegacyArtworkRevealSchema,
 } from "./scenes/modernLegacyArtworkReveal/ModernLegacyArtworkReveal";
 import {
+  ModernLegacyCollectorsRouteStory,
+  modernLegacyCollectorsRouteStoryDefaults,
+  modernLegacyCollectorsRouteStoryDurationInFrames,
+  modernLegacyCollectorsRouteStorySchema,
+} from "./scenes/modernLegacyCollectorsRouteStory/ModernLegacyCollectorsRouteStory";
+import {
   ModernLegacyInfoBoard,
   modernLegacyInfoBoardDefaults,
   modernLegacyInfoBoardSchema,
@@ -109,6 +115,18 @@ export const Root: React.FC = () => {
             durationInFrames={150}
             schema={modernLegacyArtworkRevealSchema}
             defaultProps={modernLegacyArtworkRevealDefaults}
+          />
+        </Folder>
+        <Folder name="Stories">
+          <Composition
+            id="ModernLegacyCollectorsRouteStory"
+            component={ModernLegacyCollectorsRouteStory}
+            width={1080}
+            height={1920}
+            fps={FPS}
+            durationInFrames={modernLegacyCollectorsRouteStoryDurationInFrames}
+            schema={modernLegacyCollectorsRouteStorySchema}
+            defaultProps={modernLegacyCollectorsRouteStoryDefaults}
           />
         </Folder>
         <Folder name="Resolve-Pack">
