@@ -37,13 +37,13 @@ export const DayScheduleCard: React.FC<DayScheduleCardProps> = ({
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const panelWidth = Math.min(width - tokens.safeArea.x * 2, width * 0.84);
-  const panelHeight = width * 1.06;
+  const panelWidth = Math.min(width - tokens.safeArea.x * 2, width * 0.875);
+  const panelHeight = width * 1.12;
   const titleTranslateY = (1 - textProgress) * tokens.motion.titleRise * 0.65;
   const panelTranslateY = (1 - panelProgress) * tokens.motion.panelRise;
-  const eventTitleSize = Math.min(panelWidth * 0.042, 28);
-  const eventMetaSize = Math.min(panelWidth * 0.026, 18);
-  const tabFontSize = Math.min(panelWidth * 0.022, 16);
+  const eventTitleSize = Math.min(panelWidth * 0.047, 31);
+  const eventMetaSize = Math.min(panelWidth * 0.029, 20);
+  const tabFontSize = Math.min(panelWidth * 0.024, 17);
 
   return (
     <div
@@ -104,7 +104,7 @@ export const DayScheduleCard: React.FC<DayScheduleCardProps> = ({
                 style={{
                   color: tokens.palette.ink,
                   fontFamily: tokens.typography.fonts.serif,
-                  fontSize: Math.min(panelWidth * 0.11, 76),
+                  fontSize: Math.min(panelWidth * 0.122, 84),
                   fontWeight: tokens.typography.title.fontWeight,
                   letterSpacing: "0.08em",
                   lineHeight: 0.92,
@@ -119,7 +119,7 @@ export const DayScheduleCard: React.FC<DayScheduleCardProps> = ({
                 style={{
                   color: tokens.palette.textSecondary,
                   fontFamily: `${tokens.typography.fonts.meta}, ${jpFallback}`,
-                  fontSize: Math.min(panelWidth * 0.031, 22),
+                  fontSize: Math.min(panelWidth * 0.034, 24),
                   fontWeight: 500,
                   letterSpacing: "0.04em",
                   lineHeight: 1.3,
@@ -133,7 +133,7 @@ export const DayScheduleCard: React.FC<DayScheduleCardProps> = ({
               style={{
                 color: tokens.palette.textMeta,
                 fontFamily: `${tokens.typography.fonts.meta}, ${jpFallback}`,
-                fontSize: Math.min(panelWidth * 0.026, 18),
+                fontSize: Math.min(panelWidth * 0.028, 19),
                 fontWeight: 500,
                 letterSpacing: "0.08em",
                 lineHeight: 1.2,
@@ -218,7 +218,7 @@ export const DayScheduleCard: React.FC<DayScheduleCardProps> = ({
                   style={{
                     columnGap: panelWidth * 0.034,
                     display: "grid",
-                    gridTemplateColumns: `${panelWidth * 0.22}px 1fr`,
+                    gridTemplateColumns: `${panelWidth * 0.2}px 1fr`,
                     opacity: clamp(eventProgress, 0, 1),
                     transform: `translateY(${translateY}px)`,
                   }}
@@ -257,7 +257,7 @@ export const DayScheduleCard: React.FC<DayScheduleCardProps> = ({
                             border: `${tokens.layout.hairline}px solid ${tokens.palette.rule}`,
                             color: tokens.palette.ink,
                             fontFamily: tokens.typography.fonts.meta,
-                            fontSize: Math.min(panelWidth * 0.021, 14),
+                            fontSize: Math.min(panelWidth * 0.022, 15),
                             fontWeight: 700,
                             letterSpacing: "0.16em",
                             padding: `${panelWidth * 0.006}px ${panelWidth * 0.016}px`,
@@ -315,7 +315,7 @@ export const DayScheduleCard: React.FC<DayScheduleCardProps> = ({
             style={{
               color: tokens.palette.textSecondary,
               fontFamily: `${tokens.typography.fonts.meta}, ${jpFallback}`,
-              fontSize: Math.min(panelWidth * 0.023, 16),
+              fontSize: Math.min(panelWidth * 0.024, 17),
               fontWeight: 500,
               letterSpacing: "0.08em",
               lineHeight: 1.2,

@@ -7,26 +7,21 @@ import type { ResolvedTokens } from "../../modernLegacyOpening/tokens";
 
 export type RouteMapCardProps = {
   imageSrc: string;
-  note: string;
   opacity: number;
   progress: number;
   tokens: ResolvedTokens;
   width: number;
 };
 
-const jpFallback =
-  '"Hiragino Sans", "Yu Gothic", "Yu Gothic Medium", sans-serif';
-
 export const RouteMapCard: React.FC<RouteMapCardProps> = ({
   imageSrc,
-  note,
   opacity,
   progress,
   tokens,
   width,
 }) => {
   const panelWidth = Math.min(width - tokens.safeArea.x * 2, width * 0.82);
-  const panelHeight = panelWidth * 1.12;
+  const panelHeight = panelWidth * 1.02;
   const translateY = (1 - opacity) * tokens.motion.panelRise;
   const titleTranslateY = (1 - progress) * tokens.motion.titleRise * 0.6;
 
@@ -108,7 +103,7 @@ export const RouteMapCard: React.FC<RouteMapCardProps> = ({
                 "linear-gradient(180deg, rgba(247, 243, 234, 0.94) 0%, rgba(247, 243, 234, 0.82) 100%)",
               border: `${tokens.layout.hairline}px solid ${tokens.palette.panelStroke}`,
               boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.44)",
-              height: panelWidth * 0.6,
+              height: panelWidth * 0.72,
               overflow: "hidden",
               padding: panelWidth * 0.028,
               position: "relative",
@@ -130,22 +125,6 @@ export const RouteMapCard: React.FC<RouteMapCardProps> = ({
                 width: "100%",
               }}
             />
-          </div>
-          <div
-            style={{
-              color: tokens.palette.textSecondary,
-              fontFamily: `${tokens.typography.fonts.meta}, ${jpFallback}`,
-              fontSize: Math.min(panelWidth * 0.034, 24),
-              fontWeight: 500,
-              letterSpacing: "0.02em",
-              lineHeight: 1.45,
-              margin: "0 auto",
-              maxWidth: panelWidth * 0.78,
-              opacity: Math.max(0, (progress - 0.25) / 0.75),
-              textAlign: "center",
-            }}
-          >
-            {note}
           </div>
         </div>
       </ArchivePanel>

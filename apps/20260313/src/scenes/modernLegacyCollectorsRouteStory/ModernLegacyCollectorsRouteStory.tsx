@@ -28,7 +28,7 @@ export type ModernLegacyCollectorsRouteStoryProps = z.infer<
 
 export const modernLegacyCollectorsRouteStoryDefaults: ModernLegacyCollectorsRouteStoryProps =
   {
-    routeMapImageSrc: staticFile("assets/lp/collectors-route-map.jpg"),
+    routeMapImageSrc: staticFile("assets/lp/collectors-route-map-20260220.jpg"),
     routeMapNote: collectorsRouteMapNote,
   };
 
@@ -49,7 +49,7 @@ export const modernLegacyCollectorsRouteStoryDurationInFrames =
 
 export const ModernLegacyCollectorsRouteStory: React.FC<
   ModernLegacyCollectorsRouteStoryProps
-> = ({ routeMapImageSrc, routeMapNote }) => {
+> = ({ routeMapImageSrc }) => {
   useAuctionTypographyReady();
 
   const frame = useCurrentFrame();
@@ -114,7 +114,6 @@ export const ModernLegacyCollectorsRouteStory: React.FC<
         <Sequence from={0} durationInFrames={routeMapDuration}>
           <RouteMapCard
             imageSrc={routeMapImageSrc}
-            note={routeMapNote}
             opacity={clamp(routeMapOpacity, 0, 1)}
             progress={clamp(routeMapProgress, 0, 1)}
             tokens={tokens}
