@@ -7,6 +7,7 @@
     "dev": "remotion studio",
     "preview": "remotion preview",
     "build": "remotion render src/index.ts Main out/20260313.mp4",
+    "build:auction-modern-legacy-vertical-fhd": "remotion render src/index.ts AuctionModernLegacyVerticalFHD out/auction-modern-legacy-vertical-fhd.mp4",
     "build:linked": "remotion render src/index.ts LinkedParticles out/linked.mp4",
     "build:elegant-metal": "remotion render src/index.ts ElegantMetalTitle out/elegant-metal-title.mov --image-format=png --pixel-format=yuva444p10le --codec=prores --prores-profile=4444",
     "build:sbi-splash": "remotion render src/index.ts SbiArtAuctionSplash out/sbi-art-auction-splash.mov --image-format=png --pixel-format=yuva444p10le --codec=prores --prores-profile=4444",

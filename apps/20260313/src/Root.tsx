@@ -1,7 +1,10 @@
 import React from "react";
 import { Composition, Folder } from "remotion";
 import { AuctionBloomNow } from "./scenes/AuctionBloomNow";
-import { AuctionModernLegacy } from "./scenes/AuctionModernLegacy";
+import {
+  AuctionModernLegacy,
+  auctionModernLegacyDefaults,
+} from "./scenes/AuctionModernLegacy";
 import {
   ElegantMetalTitle,
   elegantMetalTitleDefaults,
@@ -289,6 +292,19 @@ export const Root: React.FC = () => {
           height={1350}
           fps={FPS}
           durationInFrames={DURATION}
+          defaultProps={auctionModernLegacyDefaults}
+        />
+        <Composition
+          id="AuctionModernLegacyVerticalFHD"
+          component={AuctionModernLegacy}
+          width={1080}
+          height={1920}
+          fps={FPS}
+          durationInFrames={DURATION}
+          defaultProps={{
+            ...auctionModernLegacyDefaults,
+            showCopy: false,
+          }}
         />
         <Composition
           id="AuctionBloomNow"
