@@ -256,7 +256,6 @@ jobs:
           cd "$RUNTIME"
           ./node_modules/.bin/remotion render smoke/index.ts Smoke "$RUNNER_TEMP/remotion-smoke.mp4" \
             --browser-executable="$BROWSER" \
-            --frames=0 \
             --codec=h264 \
             --log=error
           test -s "$RUNNER_TEMP/remotion-smoke.mp4"
