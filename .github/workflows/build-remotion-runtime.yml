@@ -92,8 +92,8 @@ jobs:
           test -x node_modules/.bin/remotion
           test -d node_modules/@remotion/compositor-linux-x64-gnu
 
-          VERSION="$(./node_modules/.bin/remotion --version)"
-          echo "Remotion CLI: $VERSION"
+          VERSION="$(node -p "require('./node_modules/@remotion/cli/package.json').version")"
+          echo "Remotion CLI package: $VERSION"
           test "$VERSION" = "4.0.520"
 
           mkdir -p fonts licenses
@@ -191,7 +191,7 @@ jobs:
 
           ```bash
           tar -xzf remotion-runtime-linux-x64.tar.gz
-          ./node_modules/.bin/remotion --version
+          node -p "require('./node_modules/@remotion/cli/package.json').version"
           ./node_modules/.bin/remotion render src/index.ts CompositionId out/video.mp4 \
             --browser-executable=/usr/bin/chromium
           ```
@@ -227,7 +227,7 @@ jobs:
           node -e 'const [maj,min]=process.versions.node.split(".").map(Number); if (maj !== 22 || min < 16) process.exit(1); console.log(`Node ${process.version}`)'
           test -x node_modules/.bin/remotion
           test -d node_modules/@remotion/compositor-linux-x64-gnu
-          ./node_modules/.bin/remotion --version
+          node -e "const v=require('./node_modules/@remotion/cli/package.json').version; if(v!=='4.0.520') process.exit(1); console.log('Remotion '+v)"
           echo "runtime OK"
           SH
           chmod +x verify-runtime.sh
