@@ -1,0 +1,72 @@
+name: Diagnose Remotion Runtime Linux x64
+
+on:
+  push:
+    branches:
+      - build/remotion-runtime-4.0.520-20260903
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Install identical runtime dependency set and inspect layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUNTIME="$RUNNER_TEMP/remotion-runtime-diagnostic"
+          mkdir -p "$RUNTIME"
+          cat > "$RUNTIME/package.json" <<'JSON'
+          {
+            "name": "sbiaa-remotion-runtime-linux-x64-diagnostic",
+            "version": "4.0.520",
+            "private": true,
+            "dependencies": {
+              "@remotion/animation-utils": "4.0.520",
+              "@remotion/bundler": "4.0.520",
+              "@remotion/captions": "4.0.520",
+              "@remotion/cli": "4.0.520",
+              "@remotion/fonts": "4.0.520",
+              "@remotion/gif": "4.0.520",
+              "@remotion/google-fonts": "4.0.520",
+              "@remotion/layout-utils": "4.0.520",
+              "@remotion/lottie": "4.0.520",
+              "@remotion/media": "4.0.520",
+              "@remotion/media-utils": "4.0.520",
+              "@remotion/noise": "4.0.520",
+              "@remotion/paths": "4.0.520",
+              "@remotion/player": "4.0.520",
+              "@remotion/renderer": "4.0.520",
+              "@remotion/shapes": "4.0.520",
+              "@remotion/studio": "4.0.520",
+              "@remotion/transitions": "4.0.520",
+              "react": "18.3.1",
+              "react-dom": "18.3.1"
+            }
+          }
+          JSON
+          cd "$RUNTIME"
+          npm install --no-audit --no-fund --include=optional
+          echo '=== platform ==='
+          uname -a
+          node -p "process.platform + ' ' + process.arch"
+          node -p "process.report.getReport().header.glibcVersionRuntime || 'no-glibc'"
+          echo '=== remotion bin ==='
+          ls -la node_modules/.bin/remotion || true
+          echo '=== installed @remotion compositor packages ==='
+          find node_modules/@remotion -maxdepth 1 -mindepth 1 -type d -name 'compositor-*' -printf '%f\n' | sort || true
+          echo '=== npm ls ==='
+          npm ls @remotion/cli @remotion/renderer @remotion/compositor-linux-x64-gnu @remotion/compositor-linux-x64-musl || true
+          echo '=== renderer optionalDependencies ==='
+          node -e "const p=require('./node_modules/@remotion/renderer/package.json'); console.log(p.version); console.log(p.optionalDependencies)"
+          echo '=== lockfile compositor refs ==='
+          grep -n 'compositor-linux-x64' package-lock.json || true
+          echo '=== CLI version ==='
+          ./node_modules/.bin/remotion --version || true
