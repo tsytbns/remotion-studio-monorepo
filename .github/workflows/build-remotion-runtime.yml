@@ -1,0 +1,291 @@
+name: Build Remotion Runtime Linux x64
+
+on:
+  push:
+    branches:
+      - build/remotion-runtime-4.0.520-20260903
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout builder repository
+        uses: actions/checkout@v4
+
+      - name: Checkout selected Google Fonts
+        uses: actions/checkout@v4
+        with:
+          repository: google/fonts
+          path: .google-fonts
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            ofl/notosansjp
+            ofl/notoserifjp
+            ofl/inter
+            ofl/roboto
+            ofl/opensans
+            ofl/montserrat
+            ofl/sourcesans3
+            ofl/playfairdisplay
+            ofl/notosans
+            ofl/notoserif
+
+      - name: Set up Node 22.16.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+
+      - name: Build portable runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RUNTIME="$RUNNER_TEMP/remotion-runtime-linux-x64"
+          rm -rf "$RUNTIME"
+          mkdir -p "$RUNTIME"
+
+          cat > "$RUNTIME/package.json" <<'JSON'
+          {
+            "name": "sbiaa-remotion-runtime-linux-x64",
+            "version": "4.0.520",
+            "private": true,
+            "description": "Portable Remotion runtime for Linux x86_64 / Node 22 with local Google Fonts",
+            "engines": {
+              "node": ">=22.16.0 <23"
+            },
+            "dependencies": {
+              "@remotion/animation-utils": "4.0.520",
+              "@remotion/bundler": "4.0.520",
+              "@remotion/captions": "4.0.520",
+              "@remotion/cli": "4.0.520",
+              "@remotion/fonts": "4.0.520",
+              "@remotion/gif": "4.0.520",
+              "@remotion/google-fonts": "4.0.520",
+              "@remotion/layout-utils": "4.0.520",
+              "@remotion/lottie": "4.0.520",
+              "@remotion/media": "4.0.520",
+              "@remotion/media-utils": "4.0.520",
+              "@remotion/noise": "4.0.520",
+              "@remotion/paths": "4.0.520",
+              "@remotion/player": "4.0.520",
+              "@remotion/renderer": "4.0.520",
+              "@remotion/shapes": "4.0.520",
+              "@remotion/studio": "4.0.520",
+              "@remotion/transitions": "4.0.520",
+              "react": "18.3.1",
+              "react-dom": "18.3.1"
+            }
+          }
+          JSON
+
+          cd "$RUNTIME"
+          npm install --no-audit --no-fund --include=optional
+
+          test "$(uname -m)" = "x86_64"
+          test -x node_modules/.bin/remotion
+          test -d node_modules/@remotion/compositor-linux-x64-gnu
+
+          VERSION="$(./node_modules/.bin/remotion --version)"
+          echo "Remotion CLI: $VERSION"
+          test "$VERSION" = "4.0.520"
+
+          mkdir -p fonts licenses
+
+          copy_font_family() {
+            local slug="$1"
+            local src="$GITHUB_WORKSPACE/.google-fonts/ofl/$slug"
+            local dst="$RUNTIME/fonts/$slug"
+            test -d "$src"
+            mkdir -p "$dst"
+            find "$src" -maxdepth 1 -type f \( -name '*.ttf' -o -name 'OFL.txt' -o -name 'METADATA.pb' \) -exec cp -p {} "$dst/" \;
+            test "$(find "$dst" -maxdepth 1 -type f -name '*.ttf' | wc -l)" -ge 1
+          }
+
+          for family in \
+            notosansjp \
+            notoserifjp \
+            inter \
+            roboto \
+            opensans \
+            montserrat \
+            sourcesans3 \
+            playfairdisplay \
+            notosans \
+            notoserif
+          do
+            copy_font_family "$family"
+          done
+
+          cp node_modules/remotion/LICENSE.md licenses/REMOTION_LICENSE.md
+
+          cat > font-manifest.json <<'JSON'
+          {
+            "source": "https://github.com/google/fonts",
+            "families": [
+              {"family":"Noto Sans JP","slug":"notosansjp","language":"ja/en"},
+              {"family":"Noto Serif JP","slug":"notoserifjp","language":"ja/en"},
+              {"family":"Inter","slug":"inter","language":"en/latin"},
+              {"family":"Roboto","slug":"roboto","language":"en/latin"},
+              {"family":"Open Sans","slug":"opensans","language":"en/latin"},
+              {"family":"Montserrat","slug":"montserrat","language":"en/latin"},
+              {"family":"Source Sans 3","slug":"sourcesans3","language":"en/latin"},
+              {"family":"Playfair Display","slug":"playfairdisplay","language":"en/latin"},
+              {"family":"Noto Sans","slug":"notosans","language":"multilingual"},
+              {"family":"Noto Serif","slug":"notoserif","language":"multilingual"}
+            ]
+          }
+          JSON
+
+          cat > fonts.css <<'CSS'
+          /* Copy ./fonts into your Remotion project's public/fonts directory, then import this file. */
+          @font-face { font-family: 'Noto Sans JP'; src: url('/fonts/notosansjp/NotoSansJP[wght].ttf') format('truetype'); font-style: normal; font-weight: 100 900; font-display: block; }
+          @font-face { font-family: 'Noto Serif JP'; src: url('/fonts/notoserifjp/NotoSerifJP[wght].ttf') format('truetype'); font-style: normal; font-weight: 200 900; font-display: block; }
+          CSS
+
+          append_family_css() {
+            local slug="$1"
+            local family="$2"
+            local normal italic
+            normal="$(find "fonts/$slug" -maxdepth 1 -type f -name '*.ttf' ! -iname '*Italic*' | sort | head -n 1 || true)"
+            italic="$(find "fonts/$slug" -maxdepth 1 -type f -name '*Italic*.ttf' | sort | head -n 1 || true)"
+            if [[ -n "$normal" ]]; then
+              printf "@font-face { font-family: '%s'; src: url('/%s') format('truetype'); font-style: normal; font-weight: 100 900; font-display: block; }\\n" "$family" "$normal" >> fonts.css
+            fi
+            if [[ -n "$italic" ]]; then
+              printf "@font-face { font-family: '%s'; src: url('/%s') format('truetype'); font-style: italic; font-weight: 100 900; font-display: block; }\\n" "$family" "$italic" >> fonts.css
+            fi
+          }
+
+          append_family_css inter "Inter"
+          append_family_css roboto "Roboto"
+          append_family_css opensans "Open Sans"
+          append_family_css montserrat "Montserrat"
+          append_family_css sourcesans3 "Source Sans 3"
+          append_family_css playfairdisplay "Playfair Display"
+          append_family_css notosans "Noto Sans"
+          append_family_css notoserif "Noto Serif"
+
+          cat > README.md <<'MD'
+          # Remotion Runtime — Linux x86_64 / Node 22
+
+          Built for an offline or DNS-restricted rendering environment.
+
+          ## Pinned runtime
+
+          - OS/arch: Linux x86_64 (glibc)
+          - Node: 22.16.0 compatible
+          - Remotion: 4.0.520
+          - React: 18.3.1
+          - Chromium: not bundled; use the system executable
+
+          ## Use
+
+          Extract this archive at your Remotion project root, or copy `node_modules`, `package.json`, and `package-lock.json` into the project.
+
+          ```bash
+          tar -xzf remotion-runtime-linux-x64.tar.gz
+          ./node_modules/.bin/remotion --version
+          ./node_modules/.bin/remotion render src/index.ts CompositionId out/video.mp4 \
+            --browser-executable=/usr/bin/chromium
+          ```
+
+          Avoid `npx remotion` in a network-isolated environment. Use `./node_modules/.bin/remotion` so npm never tries to resolve packages remotely.
+
+          ## Fonts
+
+          Local Google Fonts are included in `fonts/`:
+
+          - Japanese + English: Noto Sans JP, Noto Serif JP
+          - Latin/UI: Inter, Roboto, Open Sans, Montserrat, Source Sans 3
+          - Editorial/serif: Playfair Display, Noto Serif
+          - Multilingual fallback: Noto Sans
+
+          Copy `fonts/` into your project's `public/fonts/` and import `fonts.css` (or adapt it to your own CSS path). Font license files are preserved in each family directory.
+
+          ## Network discipline
+
+          For deterministic renders, keep all images, video, audio, JSON, and fonts local. Do not use Google Fonts runtime fetching, CDN media, or `npx` fallback installs.
+
+          ## Licensing
+
+          Remotion uses its own license. The bundled `licenses/REMOTION_LICENSE.md` is the exact license shipped by the installed Remotion package. Google Fonts retain their OFL license files in each family folder.
+          MD
+
+          cat > verify-runtime.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          cd "$(dirname "$0")"
+          test "$(uname -s)" = "Linux"
+          test "$(uname -m)" = "x86_64"
+          node -e 'const [maj,min]=process.versions.node.split(".").map(Number); if (maj !== 22 || min < 16) process.exit(1); console.log(`Node ${process.version}`)'
+          test -x node_modules/.bin/remotion
+          test -d node_modules/@remotion/compositor-linux-x64-gnu
+          ./node_modules/.bin/remotion --version
+          echo "runtime OK"
+          SH
+          chmod +x verify-runtime.sh
+
+          ./verify-runtime.sh
+
+      - name: Smoke-render one frame with host Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUNTIME="$RUNNER_TEMP/remotion-runtime-linux-x64"
+          BROWSER="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$BROWSER"
+          mkdir -p "$RUNTIME/smoke"
+          cat > "$RUNTIME/smoke/index.ts" <<'TS'
+          import {registerRoot} from 'remotion';
+          import {Root} from './root';
+          registerRoot(Root);
+          TS
+          cat > "$RUNTIME/smoke/root.tsx" <<'TSX'
+          import React from 'react';
+          import {AbsoluteFill, Composition} from 'remotion';
+          const Frame: React.FC = () => <AbsoluteFill style={{backgroundColor: 'white'}} />;
+          export const Root: React.FC = () => <Composition id="Smoke" component={Frame} durationInFrames={1} fps={30} width={320} height={180} />;
+          TSX
+          cd "$RUNTIME"
+          ./node_modules/.bin/remotion render smoke/index.ts Smoke "$RUNNER_TEMP/remotion-smoke.mp4" \
+            --browser-executable="$BROWSER" \
+            --frames=0 \
+            --codec=h264 \
+            --log=error
+          test -s "$RUNNER_TEMP/remotion-smoke.mp4"
+          rm -rf "$RUNTIME/smoke"
+
+      - name: Create deterministic archive and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUNTIME="$RUNNER_TEMP/remotion-runtime-linux-x64"
+          OUT="$GITHUB_WORKSPACE/runtime-artifact"
+          mkdir -p "$OUT"
+          cd "$RUNTIME"
+          tar --sort=name \
+            --mtime='UTC 2026-09-03 00:00:00' \
+            --owner=0 --group=0 --numeric-owner \
+            -czf "$OUT/remotion-runtime-linux-x64.tar.gz" \
+            node_modules package.json package-lock.json fonts fonts.css font-manifest.json licenses README.md verify-runtime.sh
+          cd "$OUT"
+          sha256sum remotion-runtime-linux-x64.tar.gz > remotion-runtime-linux-x64.tar.gz.sha256
+          ls -lh remotion-runtime-linux-x64.tar.gz remotion-runtime-linux-x64.tar.gz.sha256
+
+      - name: Upload runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: remotion-runtime-linux-x64
+          path: |
+            runtime-artifact/remotion-runtime-linux-x64.tar.gz
+            runtime-artifact/remotion-runtime-linux-x64.tar.gz.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
