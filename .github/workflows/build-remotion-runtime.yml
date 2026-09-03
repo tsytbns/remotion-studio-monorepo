@@ -56,7 +56,7 @@ jobs:
             "name": "sbiaa-remotion-runtime-linux-x64",
             "version": "4.0.520",
             "private": true,
-            "description": "Portable Remotion runtime for Linux x86_64 / Node 22 with local Google Fonts",
+            "description": "Portable Remotion runtime for Linux x86_64 / Node 22 with local Google Fonts and bundled Chrome Headless Shell",
             "engines": {
               "node": ">=22.16.0 <23"
             },
@@ -87,6 +87,12 @@ jobs:
 
           cd "$RUNTIME"
           npm install --no-audit --no-fund --include=optional
+
+          # Pre-download Remotion's pinned Chrome Headless Shell into node_modules/.remotion.
+          # This avoids both runtime network access and host Chromium enterprise policies.
+          ./node_modules/.bin/remotion browser ensure --chrome-mode=headless-shell --log=error
+          BUNDLED_BROWSER="node_modules/.remotion/chrome-headless-shell/linux64/chrome-headless-shell-linux64/chrome-headless-shell"
+          test -x "$BUNDLED_BROWSER"
 
           test "$(uname -m)" = "x86_64"
           test -x node_modules/.bin/remotion
@@ -183,7 +189,7 @@ jobs:
           - Node: 22.16.0 compatible
           - Remotion: 4.0.520
           - React: 18.3.1
-          - Chromium: not bundled; use the system executable
+          - Browser: Remotion-pinned Chrome Headless Shell bundled under `node_modules/.remotion`
 
           ## Use
 
@@ -192,11 +198,12 @@ jobs:
           ```bash
           tar -xzf remotion-runtime-linux-x64.tar.gz
           node -p "require('./node_modules/@remotion/cli/package.json').version"
-          ./node_modules/.bin/remotion render src/index.ts CompositionId out/video.mp4 \
-            --browser-executable=/usr/bin/chromium
+          ./node_modules/.bin/remotion render src/index.ts CompositionId out/video.mp4
           ```
 
           Avoid `npx remotion` in a network-isolated environment. Use `./node_modules/.bin/remotion` so npm never tries to resolve packages remotely.
+
+          The archive includes Remotion's pinned Chrome Headless Shell, so do not pass `--browser-executable` unless you intentionally want to use a host browser. If you use a modern host Chromium/Chrome, pair `--browser-executable=...` with `--chrome-mode=chrome-for-testing`.
 
           ## Fonts
 
@@ -227,6 +234,7 @@ jobs:
           node -e 'const [maj,min]=process.versions.node.split(".").map(Number); if (maj !== 22 || min < 16) process.exit(1); console.log(`Node ${process.version}`)'
           test -x node_modules/.bin/remotion
           test -d node_modules/@remotion/compositor-linux-x64-gnu
+          test -x node_modules/.remotion/chrome-headless-shell/linux64/chrome-headless-shell-linux64/chrome-headless-shell
           node -e "const v=require('./node_modules/@remotion/cli/package.json').version; if(v!=='4.0.520') process.exit(1); console.log('Remotion '+v)"
           echo "runtime OK"
           SH
@@ -234,13 +242,11 @@ jobs:
 
           ./verify-runtime.sh
 
-      - name: Smoke-render one frame with host Chrome
+      - name: Smoke-render one frame with bundled Chrome Headless Shell
         shell: bash
         run: |
           set -euo pipefail
           RUNTIME="$RUNNER_TEMP/remotion-runtime-linux-x64"
-          BROWSER="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
-          test -n "$BROWSER"
           mkdir -p "$RUNTIME/smoke"
           cat > "$RUNTIME/smoke/index.ts" <<'TS'
           import {registerRoot} from 'remotion';
@@ -255,7 +261,6 @@ jobs:
           TSX
           cd "$RUNTIME"
           ./node_modules/.bin/remotion render smoke/index.ts Smoke "$RUNNER_TEMP/remotion-smoke.mp4" \
-            --browser-executable="$BROWSER" \
             --codec=h264 \
             --log=error
           test -s "$RUNNER_TEMP/remotion-smoke.mp4"
